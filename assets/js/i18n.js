@@ -1,7 +1,7 @@
 // English / Arabic interface text. Add a key in both languages.
 export const DICT = {
   en: {
-    app_name: 'QSTSS Recruitment', app_full: 'QSTSS Recruitment & Staffing System',
+    app_name: 'Recruitment & Staffing', app_full: 'Recruitment & Staffing System', org_name: 'Qatar Science & Technology Schools',
     lang_toggle: 'العربية', loading: 'Loading…', save: 'Save', saved: 'Saved', cancel: 'Cancel',
     edit: 'Edit', delete: 'Delete', add: 'Add', close: 'Close', search: 'Search', all: 'All', none: '—',
     yes: 'Yes', no: 'No', export_excel: 'Export to Excel', print: 'Print', filters: 'Filters', clear: 'Clear',
@@ -100,7 +100,7 @@ export const DICT = {
   },
 
   ar: {
-    app_name: 'توظيف مدارس العلوم والتكنولوجيا', app_full: 'نظام التوظيف والهيكل الوظيفي – مدارس قطر للعلوم والتكنولوجيا',
+    app_name: 'التوظيف والهيكل الوظيفي', app_full: 'نظام التوظيف والهيكل الوظيفي', org_name: 'مدارس قطر للعلوم والتكنولوجيا',
     lang_toggle: 'English', loading: 'جارٍ التحميل…', save: 'حفظ', saved: 'تم الحفظ', cancel: 'إلغاء',
     edit: 'تعديل', delete: 'حذف', add: 'إضافة', close: 'إغلاق', search: 'بحث', all: 'الكل', none: '—',
     yes: 'نعم', no: 'لا', export_excel: 'تصدير إلى Excel', print: 'طباعة', filters: 'التصفية', clear: 'مسح',

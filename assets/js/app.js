@@ -29,9 +29,9 @@ export function go(hash) { location.hash = hash; }
 function authShell(inner) {
   app.innerHTML = `<div class="auth-page">
     <div class="auth-card">
-      <div class="auth-brand"><div class="logo">QSTSS</div>
-        <div><h1>${esc(t('app_full'))}</h1></div>
-        <button class="btn ghost small" id="lang">${esc(t('lang_toggle'))}</button></div>
+      <div class="auth-top"><button class="btn ghost small" id="lang">${esc(t('lang_toggle'))}</button></div>
+      <div class="auth-brand"><img src="assets/img/qstss-logo.png" alt="QSTSS" class="auth-logo">
+        <div><div class="org">${esc(t('org_name'))}</div><h1>${esc(t('app_full'))}</h1></div></div>
       ${inner}
     </div></div>`;
   document.getElementById('lang').onclick = () => { setLang(state.lang === 'en' ? 'ar' : 'en'); render(); };
@@ -130,7 +130,8 @@ function layout() {
   app.innerHTML = `
   <header class="topbar">
     <button class="icon-btn menu-btn" id="menu" aria-label="menu">☰</button>
-    <div class="brand"><span class="logo">QSTSS</span><span class="brand-name">${esc(t('app_name'))}</span></div>
+    <a class="brand" href="#/dashboard"><img src="assets/img/qstss-logo.png" alt="QSTSS" class="brand-logo">
+      <span class="brand-text"><span class="brand-org">${esc(t('org_name'))}</span><span class="brand-name">${esc(t('app_name'))}</span></span></a>
     <div class="top-actions">
       ${can('interview') ? `<a class="btn primary small hide-sm" href="#/interview/new">＋ ${esc(t('nav_new_interview'))}</a>` : ''}
       <button class="btn ghost small" id="lang">${esc(t('lang_toggle'))}</button>
@@ -141,7 +142,9 @@ function layout() {
   </header>
   <div class="shell">
     <nav class="sidenav" id="nav">${nav.map(([k, r]) => `<a href="#/${k}" data-route="${k}"><span class="ico">${r.icon}</span>${esc(t(r.nav))}</a>`).join('')}</nav>
-    <main id="view" class="view"></main>
+    <main class="view"><div class="print-header"><img src="assets/img/qstss-logo.png" alt="">
+      <div><b>${esc(t('org_name'))}</b><span>${esc(t('app_full'))}</span></div><time>${new Date().toLocaleDateString(state.lang === 'ar' ? 'ar-QA-u-nu-latn' : 'en-GB')}</time></div>
+      <div id="view"></div></main>
   </div>`;
   document.getElementById('lang').onclick = () => { setLang(state.lang === 'en' ? 'ar' : 'en'); render(); };
   document.getElementById('out').onclick = async () => { await auth.signOut(); location.hash = ''; boot(); };
