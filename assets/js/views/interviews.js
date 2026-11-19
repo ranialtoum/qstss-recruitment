@@ -1,13 +1,13 @@
 import { db } from '../api.js';
 import { state, t, en, esc, num, fmtDate, options, titleOptions, enumOptions, can, visibleSchools, schoolName, titleName,
-  ratingBadge, resultBadge, exportXlsx } from '../core.js';
+  ratingBadge, resultBadge, exportXlsx, specLabel } from '../core.js';
 
 export async function render(el, ctx) {
   const ref = state.ref;
   const f = { from: '', to: '', title: '', src: '', mode: '', result: '', rating: '', school: '', q: '', ...ctx.params };
   const [ints, cands] = await Promise.all([
     db.list('interviews', { order: [['interview_date', false], ['created_at', false]] }),
-    db.list('candidates', { select: 'id,full_name,ref_no,nationality,school_id' }),
+    db.list('candidates', { select: 'id,full_name,ref_no,nationality,school_id,specialization' }),
   ]);
   if (!ctx.seq()) return;
   const cand = Object.fromEntries(cands.map(c => [c.id, c]));
@@ -32,7 +32,7 @@ export async function render(el, ctx) {
   el.querySelector('#xl').onclick = () => {
     exportXlsx([{ name: t('interview_list'), rows: rows.map(i => {
       const c = cand[i.candidate_id] || {};
-      const base = { [t('date')]: i.interview_date, [t('full_name')]: c.full_name, [t('nationality')]: c.nationality || '', [t('job_title')]: titleName(i.job_title_id),
+      const base = { [t('date')]: i.interview_date, [t('full_name')]: c.full_name, [t('nationality')]: c.nationality || '', [t('job_title')]: titleName(i.job_title_id), [t('specialization')]: specLabel(i.specialization || c.specialization),
         [t('source')]: en('cv_source', i.source), [t('source_detail')]: i.source_detail || '', [t('mode')]: en('mode', i.mode), [t('interviewers')]: i.interviewers || '',
         [t('recommended_school')]: schoolName(i.school_id), [t('computed_score')]: i.computed_score ?? '', [t('overall_score')]: i.overall_score ?? '',
         [t('rating')]: en('rating', i.rating), [t('interview_result')]: en('result', i.result), [t('strengths')]: i.strengths || '', [t('weaknesses')]: i.weaknesses || '', [t('notes')]: i.notes || '' };
@@ -56,7 +56,7 @@ export async function render(el, ctx) {
     el.querySelector('#list').innerHTML = rows.length ? `<div class="table-wrap"><table><thead><tr><th>${esc(t('date'))}</th><th>${esc(t('candidate'))}</th>
       <th>${esc(t('job_title'))}</th><th>${esc(t('source'))}</th><th>${esc(t('interviewers'))}</th><th>${esc(t('rating'))}</th><th>${esc(t('interview_result'))}</th></tr></thead>
       <tbody>${rows.map(i => { const c = cand[i.candidate_id] || {}; return `<tr class="clickable" data-id="${i.id}"><td>${fmtDate(i.interview_date)}</td>
-        <td><b>${esc(c.full_name || '')}</b><span class="cell-sub">${esc(c.nationality || '')}</span></td><td>${esc(titleName(i.job_title_id))}</td>
+        <td><b>${esc(c.full_name || '')}</b><span class="cell-sub">${esc(c.nationality || '')}</span></td><td>${esc(titleName(i.job_title_id))}${(i.specialization || c.specialization) ? `<span class="cell-sub">${esc(specLabel(i.specialization || c.specialization))}</span>` : ''}</td>
         <td>${esc(en('cv_source', i.source))}${i.mode ? `<span class="cell-sub">${esc(en('mode', i.mode))}</span>` : ''}</td>
         <td><small>${esc(i.interviewers || '')}</small></td><td>${ratingBadge(i.overall_score, i.rating)}</td><td>${resultBadge(i.result)}</td></tr>`; }).join('')}</tbody></table></div>`
       : `<div class="empty card">${esc(t('no_records'))}</div>`;

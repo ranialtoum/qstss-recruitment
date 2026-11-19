@@ -1,5 +1,7 @@
 // Hiring plan: number to hire per school × title × year (optionally split by specialisation)
 import { db } from '../api.js';
+import { LABS } from '../i18n.js';
+import { specLabel } from '../core.js';
 import { state, t, esc, num, nm, can, lockedSchool, visibleSchools, schoolName, titleName, modal, toast, fail, exportXlsx } from '../core.js';
 
 export async function render(el, ctx) {
@@ -16,7 +18,6 @@ export async function render(el, ctx) {
   ]);
   if (!ctx.seq()) return;
   const years = ref.planYears;
-  const labsFor = (sid) => ref.labs.filter(l => l.school_id === sid).map(l => l.name);
 
   el.innerHTML = `
     <div class="page-head"><div><h2>${esc(t('plan_title'))}</h2><p>${esc(t('plan_hint'))}</p></div>
@@ -88,7 +89,7 @@ export async function render(el, ctx) {
         const s = sel(sid, r.job_title_id, y.id);
         tot.y[y.id] = tot.y[y.id] || { pl: 0, se: 0 }; tot.y[y.id].pl += total; tot.y[y.id].se += s;
         row[`${t('planned')} ${y.label}`] = total; row[`${t('selected')} ${y.label}`] = s;
-        const specTip = hasSpecs ? ps.filter(p => p.planned_count).map(p => `${p.specialization || '—'}: ${p.planned_count}`).join('\n') : '';
+        const specTip = hasSpecs ? ps.filter(p => p.planned_count).map(p => `${specLabel(p.specialization) || '—'}: ${p.planned_count}`).join('\n') : '';
         return `<td class="n" style="white-space:nowrap">
           ${editable && !hasSpecs ? `<input class="num" type="number" min="0" value="${total || ''}" placeholder="0" data-t="${r.job_title_id}" data-y="${y.id}">`
             : `<b title="${esc(specTip)}">${num(total)}</b>`}
@@ -136,7 +137,7 @@ export async function render(el, ctx) {
     const ps = planned(sid, tid, yid);
     const rows = ps.length ? ps.map(p => ({ specialization: p.specialization, planned_count: p.planned_count })) : [{ specialization: '', planned_count: 0 }];
     const ti = ref.title[tid];
-    const suggestions = ti.category === 'lab' ? labsFor(sid) : [];
+    const suggestions = ti.category === 'lab' ? LABS.map(l => l[0]) : [];
     const rowHtml = (r) => `<div class="row spec-row" style="margin-bottom:.4rem">
       <input class="spec" list="speclist" placeholder="${esc(t('specialization'))}" value="${esc(r.specialization)}" style="flex:1" ${editable ? '' : 'disabled'}>
       <input class="num cnt" type="number" min="0" value="${r.planned_count}" ${editable ? '' : 'disabled'}>

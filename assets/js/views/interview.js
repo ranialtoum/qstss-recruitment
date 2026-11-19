@@ -1,7 +1,7 @@
 // Interview record: candidate + role-specific rubric + holistic score /100 with colour-coded rating
 import { db } from '../api.js';
 import { state, t, en, esc, today, options, enumOptions, titleOptions, can, role, nm, titleName, visibleSchools,
-  toast, fail, readForm, validate, ratingBadge } from '../core.js';
+  toast, fail, readForm, validate, ratingBadge, labOptions, isLabTitle, specLabel } from '../core.js';
 import { ratingFor, RATING_BANDS } from '../i18n.js';
 import { candidateFields, wireCandidateFields } from './candidate_form.js';
 
@@ -18,7 +18,7 @@ export async function render(el, ctx) {
   } else if (ctx.params.candidate) {
     cand = await db.get('candidates', ctx.params.candidate);
   }
-  const candidates = isNew && !cand ? await db.list('candidates', { select: 'id,ref_no,full_name,email,phone,nationality,job_title_id,cv_source,cv_source_detail,school_id' }) : [];
+  const candidates = isNew && !cand ? await db.list('candidates', { select: 'id,ref_no,full_name,email,phone,nationality,job_title_id,specialization,cv_source,cv_source_detail,school_id' }) : [];
   if (!ctx.seq()) return;
 
   const editable = isNew || can('manage') || (role() === 'interviewer' && iv.created_by === state.profile.id);
@@ -45,6 +45,7 @@ export async function render(el, ctx) {
           <div class="grid3">
             <label>${esc(t('interview_date'))} *<input type="date" name="interview_date" required value="${esc(v.interview_date)}"></label>
             <label class="span2">${esc(t('job_title'))} *<select name="job_title_id" data-type="int" required>${titleOptions(v.job_title_id)}</select></label>
+            <label id="labBox" class="hidden">${esc(t('lab'))} *<select id="lab">${labOptions(iv?.specialization || cand?.specialization || '')}</select></label>
             <label>${esc(t('source'))}<select name="source">${enumOptions('cv_source', v.source)}</select></label>
             <label>${esc(t('source_detail'))}<input name="source_detail" value="${esc(v.source_detail || '')}"></label>
             <label id="modeBox">${esc(t('mode'))}<select name="mode">${enumOptions('mode', v.mode)}</select></label>
@@ -89,7 +90,7 @@ export async function render(el, ctx) {
     const box = $('#cand');
     if (candMode === 'fixed' && picked) {
       box.innerHTML = `<div class="row-between"><div><b>${esc(picked.full_name)}</b> <small class="muted">#${picked.ref_no}</small>
-        <div class="muted">${esc([titleName(picked.job_title_id), picked.nationality, picked.email, picked.phone].filter(Boolean).join(' · '))}</div></div>
+        <div class="muted">${esc([titleName(picked.job_title_id), specLabel(picked.specialization), picked.nationality, picked.email, picked.phone].filter(Boolean).join(' · '))}</div></div>
         ${isNew && !ctx.params.candidate ? `<button type="button" class="btn small" id="chg">${esc(t('edit'))}</button>` : ''}</div>`;
       const chg = box.querySelector('#chg'); if (chg) chg.onclick = () => { candMode = 'existing'; picked = null; drawCand(); };
       return;
@@ -111,6 +112,7 @@ export async function render(el, ctx) {
         sg.querySelectorAll('[data-id]').forEach(d => d.onclick = () => {
           picked = candidates.find(c => c.id === d.dataset.id); candMode = 'fixed';
           if (picked.job_title_id && !$('[name=job_title_id]').value) { $('[name=job_title_id]').value = picked.job_title_id; drawCrit(); }
+          if (picked.specialization && !$('#lab').value) $('#lab').value = picked.specialization;
           if (picked.cv_source && !$('[name=source]').value) { $('[name=source]').value = picked.cv_source; $('[name=source_detail]').value = picked.cv_source_detail || ''; toggleMode(); }
           drawCand();
         });
@@ -119,6 +121,7 @@ export async function render(el, ctx) {
     } else {
       cm.innerHTML = `<div class="form" id="newc">${candidateFields({}, { compact: true })}</div>`;
       const jt = cm.querySelector('[name=job_title_id]'); if (jt) jt.closest('label').remove();
+      toggleLab();
       wireCandidateFields(cm);
       const src = cm.querySelector('[name=cv_source]');
       src.onchange = () => { $('[name=source]').value = src.value; toggleMode(); };
@@ -132,7 +135,15 @@ export async function render(el, ctx) {
     if (!ti) return [];
     return ref.criteria.filter(c => c.active !== false && ((ti.rubric_key && c.rubric_key === ti.rubric_key) || c.job_title_id === ti.id));
   }
+  function toggleLab() {
+    const lab = isLabTitle(Number($('[name=job_title_id]').value));
+    $('#labBox').classList.toggle('hidden', !lab);
+    $('#lab').required = lab;
+    const sp = form.querySelector('#newc [name=specialization]');
+    if (sp) sp.closest('label').classList.toggle('hidden', lab);
+  }
   function drawCrit() {
+    toggleLab();
     const tid = Number($('[name=job_title_id]').value);
     const crit = criteriaFor(tid);
     const ti = ref.title[tid];
@@ -200,10 +211,11 @@ export async function render(el, ctx) {
       const ov = $('#ov').value;
       const result = form.querySelector('[name=result]:checked')?.value || 'pending';
       const tid = d.job_title_id;
+      const lab = isLabTitle(tid) ? $('#lab').value : '';
       let candidate = picked;
       if (candMode === 'new') {
         const cv = readForm($('#newc'));
-        candidate = await db.insert('candidates', { ...cv, job_title_id: tid });
+        candidate = await db.insert('candidates', { ...cv, job_title_id: tid, ...(lab ? { specialization: lab } : {}) });
       }
       const c = computed();
       const crit = criteriaFor(tid).map(x => x.key);
@@ -215,10 +227,15 @@ export async function render(el, ctx) {
         strengths: form.querySelector('[name=strengths]').value || null, weaknesses: form.querySelector('[name=weaknesses]').value || null,
         notes: form.querySelector('[name=notes]').value || null, result, updated_at: new Date().toISOString(),
       };
+      if (ref.ivLab) row.specialization = lab || null;   // the database copies it to the candidate
       if (isNew) await db.insert('interviews', row); else await db.update('interviews', iv.id, row);
+      const patch = {};
+      if (!ref.ivLab && candMode !== 'new' && lab && lab !== candidate.specialization) patch.specialization = lab;
       if (result === 'accepted' && $('#assign').checked) {
-        const patch = { job_title_id: tid, year_id: Number($('#assignYear').value) || null };
+        patch.job_title_id = tid; patch.year_id = Number($('#assignYear').value) || null;
         if (d.school_id) patch.school_id = d.school_id;
+      }
+      if (Object.keys(patch).length) {
         try { await db.update('candidates', candidate.id, patch); } catch (err) { toast(err.message, 'err'); }
       }
       toast(t('interview_saved'));

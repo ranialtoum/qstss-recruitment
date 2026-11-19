@@ -71,6 +71,7 @@ with sync_playwright() as p:
     p2.reload(); p2.wait_for_selector('.kpis'); p2.goto(BASE+'#/interview/new'); p2.wait_for_selector('#cand #q')
     p2.fill('#q','Mari'); p2.wait_for_selector('.suggest [data-id]'); p2.click('.suggest [data-id]')
     p2.wait_for_timeout(300)
+    p2.select_option('#lab','Robotics')
     p2.locator('.crit').nth(0).locator('[data-n="3"]').click(); p2.locator('.crit').nth(1).locator('[data-n="3"]').click()
     p2.fill('#ov','64'); p2.dispatch_event('#ov','input'); p2.check('[name=result][value=reserve]'); p2.click('#save')
     p2.wait_for_url('**/#/candidate/*'); p2.wait_for_timeout(600); shot(p2,'14_interviewer_candidate')

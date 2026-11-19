@@ -1,6 +1,6 @@
 import { db } from '../api.js';
 import { state, t, esc, num, options, titleOptions, enumOptions, can, lockedSchool, visibleSchools, schoolName, titleName,
-  yearLabel, stageBadge, ratingBadge, en, exportXlsx, candidateRow } from '../core.js';
+  yearLabel, stageBadge, ratingBadge, en, exportXlsx, candidateRow, specLabel, labOptions } from '../core.js';
 import { ratingFor } from '../i18n.js';
 import { openCandidateForm } from './candidate_form.js';
 
@@ -9,7 +9,7 @@ const KEY = 'qstss_rec_cand_filters';
 export async function render(el, ctx) {
   const ref = state.ref;
   const saved = JSON.parse(sessionStorage.getItem(KEY) || '{}');
-  const f = { q: '', school: '', title: '', dept: '', stage: '', nat: '', src: '', year: '', rating: '', inside: '', ...saved, ...ctx.params };
+  const f = { q: '', school: '', title: '', dept: '', stage: '', nat: '', src: '', year: '', rating: '', inside: '', lab: '', ...saved, ...ctx.params };
   const all = await db.list('candidates', { order: [['created_at', false]] });
   if (!ctx.seq()) return;
   const nats = [...new Set(all.map(c => c.nationality).filter(Boolean))].sort();
@@ -24,6 +24,7 @@ export async function render(el, ctx) {
       <label>${esc(t('school'))}<select name="school" ${lockedSchool() ? 'disabled' : ''}>${options(visibleSchools(), f.school, { empty: t('all') })}<option value="none" ${f.school === 'none' ? 'selected' : ''}>— ${esc(t('not_set'))}</option></select></label>
       <label>${esc(t('department'))}<select name="dept">${options(ref.departments, f.dept, { empty: t('all') })}</select></label>
       <label>${esc(t('job_title'))}<select name="title">${titleOptions(f.title, t('all'))}</select></label>
+      <label>${esc(t('lab'))}<select name="lab">${labOptions(f.lab, t('all'))}</select></label>
       <label>${esc(t('stage'))}<select name="stage">${enumOptions('stage', f.stage, t('all'))}</select></label>
       <label>${esc(t('rating'))}<select name="rating">${enumOptions('rating', f.rating, t('all'))}</select></label>
       <label>${esc(t('nationality'))}<select name="nat">${options(nats.map(n => ({ id: n, n })), f.nat, { empty: t('all'), label: o => o.n })}</select></label>
@@ -50,7 +51,7 @@ export async function render(el, ctx) {
       (!f.school || (f.school === 'none' ? !c.school_id : String(c.school_id) === f.school)) &&
       (!f.title || String(c.job_title_id) === f.title) &&
       (!f.dept || (c.job_title_id && String(ref.title[c.job_title_id]?.department_id) === f.dept)) &&
-      (!f.stage || c.stage === f.stage) && (!f.nat || c.nationality === f.nat) && (!f.src || c.cv_source === f.src) &&
+      (!f.stage || c.stage === f.stage) && (!f.lab || c.specialization === f.lab) && (!f.nat || c.nationality === f.nat) && (!f.src || c.cv_source === f.src) &&
       (!f.year || String(c.year_id) === f.year) && (!f.rating || ratingFor(c.last_score) === f.rating) &&
       (!f.inside || String(c.inside_qatar) === f.inside));
     el.querySelector('#cnt').textContent = `${num(filtered.length)} ${t('count_records')}`;
@@ -58,7 +59,7 @@ export async function render(el, ctx) {
       <th>${esc(t('ref_no'))}</th><th>${esc(t('full_name'))}</th><th>${esc(t('job_title'))}</th><th>${esc(t('school'))}</th>
       <th>${esc(t('nationality'))}</th><th>${esc(t('cv_source'))}</th><th>${esc(t('rating'))}</th><th>${esc(t('stage'))}</th><th>${esc(t('year'))}</th></tr></thead>
       <tbody>${filtered.slice(0, 500).map(c => `<tr class="clickable" data-id="${c.id}">
-        <td class="muted">${c.ref_no}</td><td><b>${esc(c.full_name)}</b>${c.specialization ? `<span class="cell-sub">${esc(c.specialization)}</span>` : ''}</td>
+        <td class="muted">${c.ref_no}</td><td><b>${esc(c.full_name)}</b>${c.specialization ? `<span class="cell-sub">${esc(specLabel(c.specialization))}</span>` : ''}</td>
         <td>${esc(titleName(c.job_title_id))}</td><td>${esc(schoolName(c.school_id))}</td><td>${esc(c.nationality || '')}</td>
         <td>${esc(en('cv_source', c.cv_source))}</td><td>${ratingBadge(c.last_score)}</td><td>${stageBadge(c.stage)}</td><td>${esc(yearLabel(c.year_id))}</td></tr>`).join('')}
       </tbody></table></div>${filtered.length > 500 ? `<p class="muted">… ${num(filtered.length - 500)} ${esc(t('count_records'))} (${esc(t('export_excel'))})</p>` : ''}`

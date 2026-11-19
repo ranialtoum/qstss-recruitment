@@ -1,7 +1,7 @@
 // Candidate create / edit form (used from the list, the detail page and the interview page)
 import { db } from '../api.js';
 import { state, t, esc, enumOptions, titleOptions, options, modal, readForm, validate, toast, lockedSchool, visibleSchools,
-  vacancyBadge, num } from '../core.js';
+  vacancyBadge, num, labOptions, isLabTitle } from '../core.js';
 
 export const NATIONALITIES = ['Qatari', 'Jordanian', 'Palestinian', 'Egyptian', 'Syrian', 'Lebanese', 'Tunisian', 'Moroccan', 'Algerian',
   'Sudanese', 'Iraqi', 'Yemeni', 'Omani', 'Saudi', 'Emirati', 'Bahraini', 'Kuwaiti', 'Indian', 'Pakistani', 'Filipino', 'Sri Lankan',
@@ -34,7 +34,8 @@ export function candidateFields(c = {}, { compact = false } = {}) {
   </div></fieldset>
   <fieldset><legend>${esc(t('sec_professional'))}</legend><div class="grid3">
     <label class="span2">${esc(t('job_title'))}<select name="job_title_id" data-type="int">${titleOptions(c.job_title_id)}</select></label>
-    <label>${esc(t('specialization'))}<input name="specialization" list="spec-list" value="${esc(c.specialization || '')}"></label>
+    <label id="specBox">${esc(t('specialization'))}<input name="specialization" list="spec-list" value="${esc(c.specialization || '')}"></label>
+    <label id="labBox2" class="hidden">${esc(t('lab'))}<select name="specialization" disabled>${labOptions(c.specialization || '')}</select></label>
     <label>${esc(t('cv_source'))}<select name="cv_source">${enumOptions('cv_source', c.cv_source)}</select></label>
     <label>${esc(t('cv_source_detail'))}<input name="cv_source_detail" value="${esc(c.cv_source_detail || '')}"></label>
     ${compact ? '' : `
@@ -64,9 +65,16 @@ export function wireCandidateFields(root) {
   const refresh = async () => {
     const tid = Number(title.value), sid = Number(school?.value || lockedSchool());
     const ti = ref.title[tid];
-    const specs = new Set();
-    if (ti && ti.category === 'lab') ref.labs.filter(l => !sid || l.school_id === sid).forEach(l => specs.add(l.name));
-    root.querySelector('#spec-list').innerHTML = [...specs].map(s => `<option value="${esc(s)}">`).join('');
+    // lab roles pick from the lab list; other roles type a free specialisation
+    const lab = isLabTitle(tid), sb = root.querySelector('#specBox'), lb = root.querySelector('#labBox2');
+    if (sb && lb) {
+      const inp = sb.querySelector('input'), sel = lb.querySelector('select');
+      if (lab && !lb.classList.contains('hidden')) { /* already lab */ } else if (lab) { sel.value = inp.value; }
+      else if (!lb.classList.contains('hidden')) { inp.value = sel.value; }
+      sb.classList.toggle('hidden', lab); lb.classList.toggle('hidden', !lab);
+      inp.disabled = lab; sel.disabled = !lab;
+    }
+    void ti; void ref;
     const box = root.querySelector('#vac');
     if (!box) return;
     if (!tid || !sid) { box.innerHTML = `<span class="muted">${esc(t('remaining_for_title'))}: –</span>`; return; }

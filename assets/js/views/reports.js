@@ -1,7 +1,7 @@
 // Reports: flexible cross-tabs of candidates and interviews, and the full vacancies workbook
 import { db } from '../api.js';
 import { state, t, en, esc, num, pct, nm, options, titleOptions, enumOptions, lockedSchool, visibleSchools, schoolName, titleName,
-  deptName, yearLabel, exportXlsx, candidateRow, chart, SERIES, bar } from '../core.js';
+  deptName, yearLabel, exportXlsx, candidateRow, chart, SERIES, bar, specLabel } from '../core.js';
 import { ratingFor } from '../i18n.js';
 
 export async function render(el, ctx) {
@@ -18,7 +18,7 @@ export async function render(el, ctx) {
     school: [t('school'), c => c.school_id, v => schoolName(Number(v))],
     job_title: [t('job_title'), c => c.job_title_id, v => titleName(Number(v))],
     department: [t('department'), c => ref.title[c.job_title_id]?.department_id, v => deptName(Number(v))],
-    specialization: [t('specialization'), c => c.specialization, v => v],
+    specialization: [`${t('specialization')} / ${t('lab')}`, c => c.specialization, v => specLabel(v)],
     nationality: [t('nationality'), c => c.nationality, v => v],
     cv_source: [t('cv_source'), c => c.cv_source, v => en('cv_source', v)],
     stage: [t('stage'), c => c.stage, v => en('stage', v)],
@@ -41,6 +41,7 @@ export async function render(el, ctx) {
     rating: [t('rating'), i => i.rating, v => en('rating', v)],
     result: [t('interview_result'), i => i.result, v => en('result', v)],
     nationality: [t('nationality'), i => candById[i.candidate_id]?.nationality, v => v],
+    specialization: [`${t('specialization')} / ${t('lab')}`, i => i.specialization || candById[i.candidate_id]?.specialization, v => specLabel(v)],
     interviewers: [t('interviewers'), i => i.interviewers, v => v],
   };
 

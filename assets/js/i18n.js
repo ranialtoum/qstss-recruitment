@@ -76,7 +76,7 @@ export const DICT = {
     computed_score: 'Rubric score', overall_score: 'Overall judgement (/100)', use_computed: 'Use rubric score',
     strengths: 'Strengths', weaknesses: 'Areas of concern', general_notes: 'General notes', interview_result: 'Decision',
     assign_on_accept: 'Assign candidate to this school, title and year', pick_title_first: 'Choose a job title to load its criteria.',
-    rubric: 'Rubric', scale_hint: '1 = Weak · 2 = Below expectations · 3 = Meets · 4 = Strong · 5 = Outstanding',
+    lab: 'Lab', choose_lab: 'Choose the lab…', rubric: 'Rubric', scale_hint: '1 = Weak · 2 = Below expectations · 3 = Meets · 4 = Strong · 5 = Outstanding',
     interview_saved: 'Interview saved', print_form: 'Print form', interview_list: 'Interviews', from: 'From', to: 'To',
 
     // reports
@@ -167,7 +167,7 @@ export const DICT = {
     computed_score: 'درجة البنود', overall_score: 'التقييم الحكمي (من 100)', use_computed: 'اعتماد درجة البنود',
     strengths: 'نقاط القوة', weaknesses: 'نقاط تحتاج انتباه', general_notes: 'ملاحظات عامة', interview_result: 'القرار',
     assign_on_accept: 'إسناد المرشح لهذه المدرسة والمسمى والسنة', pick_title_first: 'اختر المسمى الوظيفي لتحميل بنود التقييم.',
-    rubric: 'نموذج التقييم', scale_hint: '1 = ضعيف · 2 = دون المتوقع · 3 = يلبي المتوقع · 4 = قوي · 5 = متميز',
+    lab: 'المختبر', choose_lab: 'اختر المختبر…', rubric: 'نموذج التقييم', scale_hint: '1 = ضعيف · 2 = دون المتوقع · 3 = يلبي المتوقع · 4 = قوي · 5 = متميز',
     interview_saved: 'تم حفظ المقابلة', print_form: 'طباعة النموذج', interview_list: 'المقابلات', from: 'من', to: 'إلى',
 
     report_analysis: 'تحليل المرشحين', report_vacancies: 'تقرير الشواغر', report_interviews: 'تقرير المقابلات',
@@ -225,6 +225,14 @@ export const ENUMS = {
     confirmed: ['Confirmed', 'التثبيت'], resigned: ['Resigned', 'الاستقالة'], withdrawn: ['Withdrawn', 'الانسحاب'], specialization: ['Specialisation', 'التخصص'],
   },
 };
+
+// Specialised labs (value stored = English name)
+export const LABS = [
+  ['Digital Fabrication', 'التصنيع الرقمي'], ['Chemical analysis', 'التحليل الكيميائي'], ['STEM Lab', 'مختبر STEM'],
+  ['Applied physics', 'الفيزياء التطبيقية'], ['Network', 'الشبكات'], ['Energy', 'الطاقة'], ['Engineering design', 'التصميم الهندسي'],
+  ['Robotics', 'الروبوتات'], ['BioMed', 'الطب الحيوي'], ['Communication', 'الاتصالات'], ['VR & AR', 'الواقع الافتراضي والمعزز'],
+  ['Medical Simulation', 'المحاكاة الطبية'], ['Space science', 'علوم الفضاء'], ['Drones', 'الطائرات المسيّرة'],
+];
 
 export const RATING_BANDS = [
   { key: 'excellent', min: 90 }, { key: 'very_good', min: 80 }, { key: 'good', min: 70 }, { key: 'average', min: 60 }, { key: 'weak', min: 0 },

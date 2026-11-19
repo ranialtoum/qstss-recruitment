@@ -341,6 +341,7 @@ create table public.interviews (
   source          text check (source in ('job_fair','agency','ministry','school','other')),
   source_detail   text,                                 -- fair / agency name
   mode            text check (mode in ('in_person','remote')),
+  specialization  text,                                 -- lab / specialisation interviewed for
   interviewers    text,
   rubric_key      text,
   scores          jsonb not null default '{}'::jsonb,   -- {criterion_key: 1..5}
@@ -371,13 +372,14 @@ create or replace function public.sync_candidate_interview() returns trigger
 language plpgsql security definer set search_path = public as $$
 declare cid uuid := coalesce(new.candidate_id, old.candidate_id); r record;
 begin
-  select result, interview_date, overall_score into r
+  select result, interview_date, overall_score, specialization into r
   from public.interviews where candidate_id = cid
   order by interview_date desc, created_at desc limit 1;
   update public.candidates set
-    interview_result   = coalesce(r.result, 'pending'),
+    interview_result    = coalesce(r.result, 'pending'),
     last_interview_date = r.interview_date,
-    last_score         = r.overall_score
+    last_score          = r.overall_score,
+    specialization      = coalesce(nullif(r.specialization, ''), specialization)
   where id = cid;
   return null;
 end $$;

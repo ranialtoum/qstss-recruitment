@@ -1,5 +1,5 @@
 // Shared state & helpers used by every view
-import { DICT, ENUMS, ratingFor } from './i18n.js';
+import { DICT, ENUMS, ratingFor, LABS } from './i18n.js';
 import { db } from './api.js';
 
 export const state = {
@@ -63,6 +63,21 @@ export async function loadRef() {
     planYears: years.filter(y => !y.is_baseline),
     currentYear: years.find(y => y.is_current) || years.find(y => !y.is_baseline) || years[0],
   };
+  // does the database have update 03 (lab stored on each interview)?
+  try { await db.list('interviews', { select: 'specialization', limit: 1 }); state.ref.ivLab = true; } catch (e) { state.ref.ivLab = false; }
+}
+// specialisation / lab name in the current language (labs are stored by English name)
+export function specLabel(v) {
+  if (!v) return '';
+  const l = LABS.find(x => x[0].toLowerCase() === String(v).toLowerCase());
+  return l ? l[state.lang === 'ar' ? 1 : 0] : v;
+}
+export const isLabTitle = (tid) => (state.ref.title[tid] || {}).category === 'lab';
+export function labOptions(selected, empty = t('choose_lab')) {
+  const known = LABS.some(l => l[0] === selected);
+  return `<option value="">${esc(empty)}</option>` +
+    (selected && !known ? `<option value="${esc(selected)}" selected>${esc(selected)}</option>` : '') +
+    LABS.map(l => `<option value="${esc(l[0])}" ${l[0] === selected ? 'selected' : ''}>${esc(l[state.lang === 'ar' ? 1 : 0])}</option>`).join('');
 }
 export const schoolName = (id) => nm(state.ref.school[id]) || '';
 export const titleName = (id) => nm(state.ref.title[id]) || '';
@@ -195,7 +210,7 @@ export function exportXlsx(sheets, filename) {
 export function candidateRow(c) {
   return {
     [t('ref_no')]: c.ref_no, [t('full_name')]: c.full_name, [t('cv_source')]: en('cv_source', c.cv_source),
-    [t('cv_source_detail')]: c.cv_source_detail || '', [t('specialization')]: c.specialization || '',
+    [t('cv_source_detail')]: c.cv_source_detail || '', [t('specialization')]: specLabel(c.specialization),
     [t('job_title')]: titleName(c.job_title_id), [t('department')]: c.job_title_id ? deptName(state.ref.title[c.job_title_id]?.department_id) : '',
     [t('school')]: schoolName(c.school_id), [t('year')]: yearLabel(c.year_id), [t('gender')]: en('gender', c.gender),
     [t('nationality')]: c.nationality || '', [t('email_addr')]: c.email || '', [t('phone')]: c.phone || '',

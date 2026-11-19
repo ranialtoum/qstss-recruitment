@@ -1,7 +1,7 @@
 // Candidate profile: data, vacancy, full employment journey, interviews, history
 import { db } from '../api.js';
 import { state, t, en, esc, num, fmtDate, today, can, schoolName, titleName, deptName, yearLabel, stageBadge, resultBadge,
-  ratingBadge, vacancyBadge, modal, toast, fail, readForm, role } from '../core.js';
+  ratingBadge, vacancyBadge, modal, toast, fail, readForm, role, specLabel, isLabTitle } from '../core.js';
 import { openCandidateForm } from './candidate_form.js';
 
 const STEPS = [
@@ -55,7 +55,7 @@ export async function render(el, ctx) {
         <div class="card"><h3>${esc(t('profile'))}</h3>
           <div class="facts">
             ${fact(t('job_title'), titleName(c.job_title_id))}${fact(t('department'), c.job_title_id ? deptName(state.ref.title[c.job_title_id]?.department_id) : '')}
-            ${fact(t('specialization'), c.specialization)}${fact(t('school'), schoolName(c.school_id))}${fact(t('year'), yearLabel(c.year_id))}
+            ${fact(isLabTitle(c.job_title_id) ? t('lab') : t('specialization'), specLabel(c.specialization))}${fact(t('school'), schoolName(c.school_id))}${fact(t('year'), yearLabel(c.year_id))}
             ${fact(t('cv_source'), [en('cv_source', c.cv_source), c.cv_source_detail].filter(Boolean).join(' – '))}
             ${fact(t('gender'), en('gender', c.gender))}${fact(t('nationality'), c.nationality)}
             ${fact(t('email_addr'), c.email ? `<a href="mailto:${esc(c.email)}">${esc(c.email)}</a>` : '', true)}
