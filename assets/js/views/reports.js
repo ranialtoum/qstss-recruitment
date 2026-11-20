@@ -3,6 +3,7 @@ import { db } from '../api.js';
 import { state, t, en, esc, num, pct, nm, options, titleOptions, enumOptions, lockedSchool, visibleSchools, schoolName, titleName,
   deptName, yearLabel, exportXlsx, candidateRow, chart, SERIES, bar, specLabel } from '../core.js';
 import { ratingFor } from '../i18n.js';
+import { labRows } from './labs.js';
 
 export async function render(el, ctx) {
   const ref = state.ref;
@@ -156,12 +157,20 @@ export async function render(el, ctx) {
         r[t('occupancy')] = `${pct(o.c + o.sel, o.a)}%`; return r;
       }) }];
       for (const s of schools) {
-        sheets.push({ name: nm(s), rows: pos.filter(r => r.school_id === s.id).sort((a, b) => ref.title[a.job_title_id].sort - ref.title[b.job_title_id].sort).map(r => {
+        sheets.push({ name: nm(s), rows: pos.filter(r => r.school_id === s.id).sort((a, b) => ref.title[a.job_title_id].sort - ref.title[b.job_title_id].sort).flatMap(r => {
           const o = { [t('department')]: deptName(r.department_id), [t('job_title')]: titleName(r.job_title_id), [t('approved')]: r.approved_count, [t('current_staff')]: r.current_staff,
             [t('selected')]: r.selected, [t('hired')]: r.hired, [t('joined')]: r.joined, [t('remaining')]: r.remaining };
           years.forEach(y => { const L = plan.filter(p => p.school_id === s.id && p.job_title_id === r.job_title_id && p.year_id === y.id);
             o[`${t('planned')} ${y.label}`] = L.reduce((x, q) => x + q.planned, 0); o[`${t('selected')} ${y.label}`] = L.reduce((x, q) => x + q.selected, 0); });
-          return o;
+          if (!ref.title[r.job_title_id].per_lab) return [o];
+          const labs = labRows(s.id, r, cands.filter(c => c.school_id === s.id && c.job_title_id === r.job_title_id),
+            plan.filter(p => p.school_id === s.id && p.job_title_id === r.job_title_id), years);
+          return [o, ...labs.map(l => {
+            const e = { [t('department')]: deptName(r.department_id), [t('job_title')]: `   ↳ ${l.unassigned ? t('lab_unassigned') : specLabel(l.name)}`, [t('approved')]: l.approved,
+              [t('current_staff')]: l.current, [t('selected')]: l.selected, [t('hired')]: l.hired, [t('joined')]: l.joined, [t('remaining')]: l.remaining };
+            years.forEach(y => { e[`${t('planned')} ${y.label}`] = l.years[y.id].pl; e[`${t('selected')} ${y.label}`] = l.years[y.id].se; });
+            return e;
+          })];
         }) });
       }
       exportXlsx(sheets, 'vacancies_report');

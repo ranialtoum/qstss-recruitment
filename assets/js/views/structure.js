@@ -1,7 +1,8 @@
 // Vacancies: approved structure vs staff vs selected candidates, per school and title
 import { db } from '../api.js';
 import { state, t, esc, num, nm, can, lockedSchool, visibleSchools, schoolName, titleName, vacancyBadge, modal, toast,
-  readForm, exportXlsx, stageBadge, ratingBadge, en, yearLabel } from '../core.js';
+  readForm, exportXlsx, stageBadge, ratingBadge, en, yearLabel, specLabel, labOptions, loadRef, fail } from '../core.js';
+import { labRows, perLabTitles, schoolLabs } from './labs.js';
 
 export async function render(el, ctx) {
   const ref = state.ref;
@@ -9,11 +10,17 @@ export async function render(el, ctx) {
   let school = locked || ctx.params.school || 'all';
   if (locked) school = String(locked);
 
-  let [pos, plan, positions] = await Promise.all([
+  const labTitleIds = perLabTitles().map(x => x.id);
+  let [pos, plan, positions, labCands] = await Promise.all([
     db.list('v_position_status', { eq: { school_id: locked || undefined } }),
     db.list('v_plan_status', { eq: { school_id: locked || undefined } }),
     can('admin') ? db.list('school_positions') : Promise.resolve([]),
+    labTitleIds.length ? db.list('candidates', { select: 'school_id,job_title_id,specialization,stage', in: { job_title_id: labTitleIds } }) : Promise.resolve([]),
   ]);
+  // lab rows for one school × per-lab title
+  const breakdown = (sid, tid) => labRows(sid, pos.find(r => r.school_id === sid && r.job_title_id === tid),
+    labCands.filter(c => c.school_id === sid && c.job_title_id === tid), plan.filter(p => p.school_id === sid && p.job_title_id === tid), years);
+  const labName = (r) => (r.unassigned ? t('lab_unassigned') : specLabel(r.name));
   if (!ctx.seq()) return;
   const years = ref.planYears;
 
@@ -56,6 +63,24 @@ export async function render(el, ctx) {
           const row = { [t('department')]: nm(d), [t('job_title')]: nm(ti), [t('approved')]: a, [t('current_staff')]: c, [t('selected')]: s, [t('remaining')]: rem };
           schools.forEach((sc, i) => { row[nm(sc)] = per[i] ? per[i].remaining : ''; });
           exportRows.push(row);
+          if (ti.per_lab) {
+            // one line per lab across all schools
+            const bySchool = schools.map(sc => breakdown(sc.id, ti.id));
+            const names = [];
+            bySchool.flat().forEach(r => { const k = r.unassigned ? '__u' : r.name; if (!names.includes(k)) names.push(k); });
+            names.sort((x, y) => (x === '__u') - (y === '__u'));
+            for (const k of names) {
+              const cells = bySchool.map(list => list.find(r => (r.unassigned ? '__u' : r.name) === k));
+              const S = (f) => cells.reduce((x, r) => x + (r ? r[f] : 0), 0);
+              const label = k === '__u' ? t('lab_unassigned') : specLabel(k);
+              html += `<tr class="sub ${k === '__u' ? 'unassigned' : ''}"><td>${esc(label)}</td><td class="n">${num(S('approved'))}</td><td class="n">${num(S('current'))}</td>
+                <td class="n">${num(S('selected'))}</td><td class="n ${cls(S('remaining'))}">${num(S('remaining'))}</td>
+                ${cells.map(r => `<td class="n ${r ? cls(r.remaining) : ''}">${r ? num(r.remaining) : '–'}</td>`).join('')}</tr>`;
+              const er = { [t('department')]: nm(d), [t('job_title')]: `   ↳ ${label}`, [t('approved')]: S('approved'), [t('current_staff')]: S('current'), [t('selected')]: S('selected'), [t('remaining')]: S('remaining') };
+              schools.forEach((sc, i) => { er[nm(sc)] = cells[i] ? cells[i].remaining : ''; });
+              exportRows.push(er);
+            }
+          }
         }
       }
       html += `</tbody><tfoot><tr><td>${esc(t('total'))}</td><td class="n">${num(tot.a)}</td><td class="n">${num(tot.c)}</td><td class="n">${num(tot.s)}</td><td class="n">${num(tot.r)}</td>
@@ -95,6 +120,22 @@ export async function render(el, ctx) {
           [t('selected')]: r.selected, [t('hired')]: r.hired, [t('joined')]: r.joined, [t('remaining')]: r.remaining };
         years.forEach(y => { const p = yp(r.job_title_id, y.id); row[`${t('planned')} ${y.label}`] = p.reduce((a, x) => a + x.planned, 0); row[`${t('selected')} ${y.label}`] = p.reduce((a, x) => a + x.selected, 0); });
         exportRows.push(row);
+        if (ti.per_lab) {
+          const labs = breakdown(sid, ti.id);
+          if (!labs.length) html += `<tr class="sub"><td colspan="${9 + years.length + (can('admin') ? 1 : 0)}"><span class="muted">${esc(t('no_labs'))}</span></td></tr>`;
+          for (const l of labs) {
+            html += `<tr class="sub ${l.unassigned ? 'unassigned' : ''}"><td>${esc(labName(l))}</td><td></td>
+              <td class="n">${num(l.approved)}</td><td class="n">${num(l.current)}</td><td class="n">${num(l.selected)}</td>
+              <td class="n">${num(l.hired)}</td><td class="n">${num(l.joined)}</td><td class="n ${cls(l.remaining)}">${num(l.remaining)}</td>
+              <td>${l.unassigned ? '' : vacancyBadge(l.remaining)}</td>
+              ${years.map(y => { const v = l.years[y.id]; return `<td class="n">${v.pl || v.se ? `${num(v.se)} / ${num(v.pl)}` : '<span class="muted">–</span>'}</td>`; }).join('')}
+              ${can('admin') ? '<td></td>' : ''}</tr>`;
+            const er = { [t('department')]: nm(d), [t('job_title')]: `   ↳ ${labName(l)}`, [t('approved')]: l.approved, [t('current_staff')]: l.current,
+              [t('selected')]: l.selected, [t('hired')]: l.hired, [t('joined')]: l.joined, [t('remaining')]: l.remaining };
+            years.forEach(y => { er[`${t('planned')} ${y.label}`] = l.years[y.id].pl; er[`${t('selected')} ${y.label}`] = l.years[y.id].se; });
+            exportRows.push(er);
+          }
+        }
       }
     }
     html += `</tbody><tfoot><tr><td colspan="2">${esc(t('total'))}</td><td class="n">${num(tot.a)}</td><td class="n">${num(tot.c)}</td><td class="n">${num(tot.s)}</td>
@@ -116,13 +157,14 @@ export async function render(el, ctx) {
       body: list.length ? `<div class="table-wrap"><table><thead><tr><th>${esc(t('full_name'))}</th><th>${esc(t('specialization'))}</th><th>${esc(t('year'))}</th>
           <th>${esc(t('rating'))}</th><th>${esc(t('stage'))}</th></tr></thead><tbody>
           ${list.map(c => `<tr class="clickable" onclick="location.hash='#/candidate/${c.id}';document.querySelector('.modal-wrap').remove()">
-            <td>${esc(c.full_name)}</td><td>${esc(c.specialization || '')}</td><td>${esc(yearLabel(c.year_id))}</td><td>${ratingBadge(c.last_score)}</td><td>${stageBadge(c.stage)}</td></tr>`).join('')}
+            <td>${esc(c.full_name)}</td><td>${esc(specLabel(c.specialization))}</td><td>${esc(yearLabel(c.year_id))}</td><td>${ratingBadge(c.last_score)}</td><td>${stageBadge(c.stage)}</td></tr>`).join('')}
           </tbody></table></div>` : `<div class="empty">${esc(t('no_records'))}</div>`,
     });
   }
 
   function editCounts(sid, tid) {
     const p = positions.find(x => x.school_id === sid && x.job_title_id === tid);
+    if (ref.title[tid].per_lab) return editLabs(sid, tid, p);
     modal({
       title: `${t('edit_structure')}: ${titleName(tid)} — ${schoolName(sid)}`,
       body: `<div class="form"><div class="grid2">
@@ -137,6 +179,58 @@ export async function render(el, ctx) {
         toast(t('saved')); draw();
       },
     });
+  }
+  // per-lab title: edit the school's labs (needed number + staff per lab)
+  function editLabs(sid, tid, p) {
+    const labs = schoolLabs(sid);
+    const rowHtml = (l) => `<tr data-id="${l.id || ''}"><td><select class="lab-name">${labOptions(l.name || '', t('choose_lab'))}</select></td>
+      <td class="n"><input class="num lab-app" type="number" min="0" value="${l.approved_count ?? 1}"></td>
+      <td class="n"><input class="num lab-cur" type="number" min="0" value="${l.current_staff ?? 0}"></td>
+      <td><button type="button" class="icon-btn lab-rm" title="${esc(t('delete'))}">✕</button></td></tr>`;
+    const m = modal({
+      title: `${t('edit_structure')}: ${titleName(tid)} — ${schoolName(sid)}`, wide: true,
+      body: `<div class="form">
+        <p class="muted" style="margin:0">${esc(t('labs_total_hint'))} ${esc(t('lab_staff_hint'))}</p>
+        <div class="table-wrap"><table><thead><tr><th>${esc(t('lab'))}</th><th class="n">${esc(t('approved'))}</th><th class="n">${esc(t('current_staff'))}</th><th></th></tr></thead>
+          <tbody id="labrows">${labs.map(rowHtml).join('')}</tbody>
+          <tfoot><tr><td>${esc(t('total'))}</td><td class="n" id="labsum"></td><td class="n" id="labcur"></td><td></td></tr></tfoot></table></div>
+        <button type="button" class="btn small" id="addlab" style="align-self:flex-start">＋ ${esc(t('add_lab'))}</button>
+        <div class="grid2"><label>${esc(t('total_staff'))}<input name="current_staff" type="number" min="0" data-type="int" value="${p?.current_staff ?? 0}"></label></div>
+        <label>${esc(t('notes'))}<textarea name="notes">${esc(p?.notes || '')}</textarea></label></div>`,
+      onSave: async (w) => {
+        const rows = [...w.querySelectorAll('#labrows tr')].map(tr => ({ id: tr.dataset.id ? Number(tr.dataset.id) : null,
+          name: tr.querySelector('.lab-name').value, approved_count: Math.max(0, parseInt(tr.querySelector('.lab-app').value || '0', 10) || 0),
+          current_staff: Math.max(0, parseInt(tr.querySelector('.lab-cur').value || '0', 10) || 0) })).filter(r => r.name);
+        const names = rows.map(r => r.name);
+        if (new Set(names).size !== names.length) throw new Error(state.lang === 'ar' ? 'مختبر مكرر' : 'A lab appears twice');
+        const keep = new Set(rows.filter(r => r.id).map(r => r.id));
+        for (const l of labs) if (!keep.has(l.id)) await db.remove('school_labs', l.id);
+        for (const r of rows) {
+          if (r.id) await db.update('school_labs', r.id, { name: r.name, approved_count: r.approved_count, current_staff: r.current_staff });
+          else await db.insert('school_labs', { school_id: sid, name: r.name, approved_count: r.approved_count, current_staff: r.current_staff });
+        }
+        const v = readForm(w.querySelector('.grid2').parentElement);
+        const labCur = rows.reduce((a, r) => a + r.current_staff, 0);
+        const patch = { current_staff: Math.max(v.current_staff || 0, labCur), notes: v.notes,
+          ...(rows.length ? {} : { approved_count: p?.approved_count ?? 0 }) };
+        await db.upsert('school_positions', [{ ...(p ? { id: p.id } : {}), school_id: sid, job_title_id: tid, ...patch, updated_at: new Date().toISOString() }], 'school_id,job_title_id');
+        await loadRef();
+        [pos, positions, plan] = await Promise.all([
+          db.list('v_position_status', { eq: { school_id: locked || undefined } }), db.list('school_positions'),
+          db.list('v_plan_status', { eq: { school_id: locked || undefined } })]);
+        toast(t('saved')); draw();
+      },
+    });
+    const w = m.el;
+    const totals = () => {
+      const q = (c) => [...w.querySelectorAll(c)].reduce((a, i) => a + (parseInt(i.value || '0', 10) || 0), 0);
+      w.querySelector('#labsum').textContent = num(q('.lab-app')); w.querySelector('#labcur').textContent = num(q('.lab-cur'));
+    };
+    const wire = () => { w.querySelectorAll('.lab-rm').forEach(b => b.onclick = () => { b.closest('tr').remove(); totals(); });
+      w.querySelectorAll('.lab-app,.lab-cur').forEach(i => i.oninput = totals); };
+    w.querySelector('#addlab').onclick = () => { w.querySelector('#labrows').insertAdjacentHTML('beforeend', rowHtml({ approved_count: 1, current_staff: 0 })); wire(); totals(); };
+    wire(); totals();
+    void fail;
   }
   draw();
 }

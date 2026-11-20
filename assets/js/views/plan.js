@@ -137,7 +137,8 @@ export async function render(el, ctx) {
     const ps = planned(sid, tid, yid);
     const rows = ps.length ? ps.map(p => ({ specialization: p.specialization, planned_count: p.planned_count })) : [{ specialization: '', planned_count: 0 }];
     const ti = ref.title[tid];
-    const suggestions = ti.category === 'lab' ? LABS.map(l => l[0]) : [];
+    const own = ref.labs.filter(l => l.school_id === sid).map(l => l.name);
+    const suggestions = ti.category === 'lab' ? [...new Set([...(ti.per_lab ? own : []), ...LABS.map(l => l[0])])] : [];
     const rowHtml = (r) => `<div class="row spec-row" style="margin-bottom:.4rem">
       <input class="spec" list="speclist" placeholder="${esc(t('specialization'))}" value="${esc(r.specialization)}" style="flex:1" ${editable ? '' : 'disabled'}>
       <input class="num cnt" type="number" min="0" value="${r.planned_count}" ${editable ? '' : 'disabled'}>

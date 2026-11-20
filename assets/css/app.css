@@ -272,3 +272,9 @@ legend { font-weight: 600; padding: 0 .4rem; color: var(--brand); }
 }
 table.plan td:first-child, table.plan th:first-child { min-width: 190px; }
 table.plan input.num { width: 58px; }
+
+tr.sub td { background: #fafbfd; font-size: .88rem; color: var(--ink-2); }
+tr.sub td:first-child { padding-inline-start: 2rem; position: relative; }
+tr.sub td:first-child::before { content: '↳'; position: absolute; inset-inline-start: .9rem; color: var(--accent); }
+html[dir=rtl] tr.sub td:first-child::before { content: '↲'; }
+tr.sub.unassigned td { font-style: italic; color: var(--amber); background: #fffbf2; }

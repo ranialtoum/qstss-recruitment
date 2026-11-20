@@ -76,7 +76,9 @@ export const DICT = {
     computed_score: 'Rubric score', overall_score: 'Overall judgement (/100)', use_computed: 'Use rubric score',
     strengths: 'Strengths', weaknesses: 'Areas of concern', general_notes: 'General notes', interview_result: 'Decision',
     assign_on_accept: 'Assign candidate to this school, title and year', pick_title_first: 'Choose a job title to load its criteria.',
-    lab: 'Lab', choose_lab: 'Choose the lab…', rubric: 'Rubric', scale_hint: '1 = Weak · 2 = Below expectations · 3 = Meets · 4 = Strong · 5 = Outstanding',
+    lab: 'Lab', choose_lab: 'Choose the lab…', labs: 'Specialised labs', lab_unassigned: 'Not linked to a lab yet', add_lab: 'Add lab',
+    labs_total_hint: 'The approved total for this title is the sum of the labs below.', no_labs: 'No labs listed for this school yet — add them with Edit.',
+    lab_staff_hint: 'Staff per lab is optional; staff not linked to a lab appear on a separate line.', total_staff: 'Total staff in post (2026/27)', rubric: 'Rubric', scale_hint: '1 = Weak · 2 = Below expectations · 3 = Meets · 4 = Strong · 5 = Outstanding',
     interview_saved: 'Interview saved', print_form: 'Print form', interview_list: 'Interviews', from: 'From', to: 'To',
 
     // reports
@@ -167,7 +169,9 @@ export const DICT = {
     computed_score: 'درجة البنود', overall_score: 'التقييم الحكمي (من 100)', use_computed: 'اعتماد درجة البنود',
     strengths: 'نقاط القوة', weaknesses: 'نقاط تحتاج انتباه', general_notes: 'ملاحظات عامة', interview_result: 'القرار',
     assign_on_accept: 'إسناد المرشح لهذه المدرسة والمسمى والسنة', pick_title_first: 'اختر المسمى الوظيفي لتحميل بنود التقييم.',
-    lab: 'المختبر', choose_lab: 'اختر المختبر…', rubric: 'نموذج التقييم', scale_hint: '1 = ضعيف · 2 = دون المتوقع · 3 = يلبي المتوقع · 4 = قوي · 5 = متميز',
+    lab: 'المختبر', choose_lab: 'اختر المختبر…', labs: 'المختبرات التخصصية', lab_unassigned: 'غير مرتبط بمختبر بعد', add_lab: 'إضافة مختبر',
+    labs_total_hint: 'إجمالي المعتمد لهذا المسمى هو مجموع المختبرات أدناه.', no_labs: 'لم تُسجَّل مختبرات لهذه المدرسة بعد — أضفها من زر تعديل.',
+    lab_staff_hint: 'عدد الموظفين لكل مختبر اختياري؛ ويظهر من لم يُربط بمختبر في سطر مستقل.', total_staff: 'إجمالي الموظفين على رأس العمل (2026/27)', rubric: 'نموذج التقييم', scale_hint: '1 = ضعيف · 2 = دون المتوقع · 3 = يلبي المتوقع · 4 = قوي · 5 = متميز',
     interview_saved: 'تم حفظ المقابلة', print_form: 'طباعة النموذج', interview_list: 'المقابلات', from: 'من', to: 'إلى',
 
     report_analysis: 'تحليل المرشحين', report_vacancies: 'تقرير الشواغر', report_interviews: 'تقرير المقابلات',

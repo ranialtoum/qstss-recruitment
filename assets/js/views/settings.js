@@ -9,7 +9,7 @@ export async function render(el, ctx) {
   const ref = state.ref;
   el.innerHTML = `
     <div class="page-head"><h2>${esc(t('nav_settings'))}</h2></div>
-    <div class="tabs" id="tabs">${['years', 'rubrics', 'titles', 'labs'].map(k => `<button data-t="${k}" class="${k === tab ? 'active' : ''}">${esc(t('settings_' + k))}</button>`).join('')}</div>
+    <div class="tabs" id="tabs">${['years', 'rubrics', 'titles'].map(k => `<button data-t="${k}" class="${k === tab ? 'active' : ''}">${esc(t('settings_' + k))}</button>`).join('')}</div>
     <div id="body"></div>`;
   el.querySelectorAll('#tabs button').forEach(b => b.onclick = () => { tab = b.dataset.t; render(el, ctx); });
   const body = el.querySelector('#body');
