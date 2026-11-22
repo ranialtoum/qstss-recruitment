@@ -35,7 +35,7 @@ export function candidateFields(c = {}, { compact = false } = {}) {
   <fieldset><legend>${esc(t('sec_professional'))}</legend><div class="grid3">
     <label class="span2">${esc(t('job_title'))}<select name="job_title_id" data-type="int">${titleOptions(c.job_title_id)}</select></label>
     <label id="specBox">${esc(t('specialization'))}<input name="specialization" list="spec-list" value="${esc(c.specialization || '')}"></label>
-    <label id="labBox2" class="hidden">${esc(t('lab'))}<select name="specialization" disabled>${labOptions(c.specialization || '')}</select></label>
+    <label id="labBox2" class="hidden">${esc(t('lab_or_spec'))}<select name="specialization" disabled>${labOptions(c.specialization || '')}</select></label>
     <label>${esc(t('cv_source'))}<select name="cv_source">${enumOptions('cv_source', c.cv_source)}</select></label>
     <label>${esc(t('cv_source_detail'))}<input name="cv_source_detail" value="${esc(c.cv_source_detail || '')}"></label>
     ${compact ? '' : `

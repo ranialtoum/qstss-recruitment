@@ -46,7 +46,7 @@ export async function render(el, ctx) {
           <div class="grid3">
             <label>${esc(t('interview_date'))} *<input type="date" name="interview_date" required value="${esc(v.interview_date)}"></label>
             <label class="span2">${esc(t('job_title'))} *<select name="job_title_id" data-type="int" required>${titleOptions(v.job_title_id)}</select></label>
-            <label id="labBox" class="hidden">${esc(t('lab'))} *<select id="lab">${labOptions(iv?.specialization || cand?.specialization || '')}</select></label>
+            <label id="labBox" class="hidden">${esc(t('lab_or_spec'))} *<select id="lab">${labOptions(iv?.specialization || cand?.specialization || '')}</select></label>
             <label>${esc(t('source'))}<select name="source">${enumOptions('cv_source', v.source)}</select></label>
             <label>${esc(t('source_detail'))}<input name="source_detail" value="${esc(v.source_detail || '')}"></label>
             <label id="modeBox">${esc(t('mode'))}<select name="mode">${enumOptions('mode', v.mode)}</select></label>

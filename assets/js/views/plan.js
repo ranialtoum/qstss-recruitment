@@ -1,7 +1,8 @@
 // Hiring plan: number to hire per school × title × year (optionally split by specialisation)
 import { db } from '../api.js';
 import { LABS } from '../i18n.js';
-import { specLabel } from '../core.js';
+import { specLabel, planBySpec, labOptions } from '../core.js';
+import { schoolLabs } from './labs.js';
 import { state, t, esc, num, nm, can, lockedSchool, visibleSchools, schoolName, titleName, modal, toast, fail, exportXlsx } from '../core.js';
 
 export async function render(el, ctx) {
@@ -80,6 +81,8 @@ export async function render(el, ctx) {
     for (const r of rows) {
       if (r.department_id !== lastDept) { lastDept = r.department_id; html += `<tr class="group"><td colspan="${6 + years.length}">${esc(nm(ref.dept[r.department_id]))}</td></tr>`; }
       const need = r.approved_count - r.current_staff;
+      const ti = ref.title[r.job_title_id];
+      const bySpec = planBySpec(ti);
       let tp = 0;
       const row = { [t('department')]: nm(ref.dept[r.department_id]), [t('job_title')]: titleName(r.job_title_id), [t('approved')]: r.approved_count, [t('current_staff')]: r.current_staff, [t('remaining')]: r.remaining };
       const cells = years.map(y => {
@@ -91,18 +94,20 @@ export async function render(el, ctx) {
         row[`${t('planned')} ${y.label}`] = total; row[`${t('selected')} ${y.label}`] = s;
         const specTip = hasSpecs ? ps.filter(p => p.planned_count).map(p => `${specLabel(p.specialization) || '—'}: ${p.planned_count}`).join('\n') : '';
         return `<td class="n" style="white-space:nowrap">
-          ${editable && !hasSpecs ? `<input class="num" type="number" min="0" value="${total || ''}" placeholder="0" data-t="${r.job_title_id}" data-y="${y.id}">`
+          ${editable && !hasSpecs && !bySpec ? `<input class="num" type="number" min="0" value="${total || ''}" placeholder="0" data-t="${r.job_title_id}" data-y="${y.id}">`
             : `<b title="${esc(specTip)}">${num(total)}</b>`}
-          ${editable || hasSpecs ? `<button class="icon-btn" title="${esc(t('breakdown'))}" data-bd="${r.job_title_id}:${y.id}">${hasSpecs ? '⋯' : '＋'}</button>` : ''}
+          ${!bySpec && (editable || hasSpecs) ? `<button class="icon-btn" title="${esc(t('breakdown'))}" data-bd="${r.job_title_id}:${y.id}">${hasSpecs ? '⋯' : '＋'}</button>` : ''}
           <span class="cell-sub">${s ? `✓ ${num(s)}` : ''}</span></td>`;
       }).join('');
       const gap = need - tp;
       tot.tp += tp; tot.gap += Math.max(0, gap);
       row[t('plan_total')] = tp; row[t('gap')] = gap;
       exportRows.push(row);
-      html += `<tr><td>${esc(titleName(r.job_title_id))}</td><td class="n">${num(r.approved_count)}</td><td class="n">${num(r.current_staff)}</td>
+      html += `<tr><td>${esc(titleName(r.job_title_id))}${bySpec && editable ? ` <button class="btn small ghost no-print" data-addspec="${r.job_title_id}">＋ ${esc(t('add_spec'))}</button>` : ''}</td>
+        <td class="n">${num(r.approved_count)}</td><td class="n">${num(r.current_staff)}</td>
         <td class="n">${num(r.remaining)}</td>${cells}<td class="n"><b>${num(tp)}</b></td>
         <td class="n ${gap > 0 ? 'pos' : gap < 0 ? 'neg' : 'zero'}" title="${gap < 0 ? esc(t('plan_exceeds')) : ''}">${num(gap)}${gap < 0 ? ' ⚠' : ''}</td></tr>`;
+      if (bySpec) html += specRows(sid, r, ti);
     }
     html += `</tbody><tfoot><tr><td colspan="4">${esc(t('total'))}</td>${years.map(y => `<td class="n">${num(tot.y[y.id]?.pl || 0)}<span class="cell-sub">✓ ${num(tot.y[y.id]?.se || 0)}</span></td>`).join('')}
       <td class="n">${num(tot.tp)}</td><td class="n">${num(tot.gap)}</td></tr></tfoot></table></div>`;
@@ -112,9 +117,78 @@ export async function render(el, ctx) {
       const tid = Number(inp.dataset.t), yid = Number(inp.dataset.y), v = Math.max(0, parseInt(inp.value || '0', 10) || 0);
       try { await savePlan(sid, tid, yid, [{ specialization: '', planned_count: v }]); toast(t('saved')); draw(); } catch (e) { fail(e); }
     });
+    body.querySelectorAll('input[data-spec]').forEach(inp => inp.onchange = async () => {
+      const tid = Number(inp.dataset.st), yid = Number(inp.dataset.y), v = Math.max(0, parseInt(inp.value || '0', 10) || 0);
+      try { await saveSpec(sid, tid, yid, inp.dataset.spec, v); toast(t('saved')); draw(); } catch (e) { fail(e); }
+    });
+    body.querySelectorAll('[data-addspec]').forEach(b => b.onclick = () => addSpec(sid, Number(b.dataset.addspec)));
     body.querySelectorAll('[data-bd]').forEach(b => b.onclick = () => {
       const [tid, yid] = b.dataset.bd.split(':').map(Number);
       breakdown(sid, tid, yid);
+    });
+  }
+
+  // ---- per lab / specialisation lines (Specialised Labs Engineer, Lab Technician) ----
+  const extraSpecs = {};   // lines added in this session before any number is saved
+  function specList(sid, ti) {
+    const fromLabs = ti.per_lab ? schoolLabs(sid).map(l => l.name) : [];
+    const fromPlan = plan.filter(p => p.school_id === sid && p.job_title_id === ti.id).map(p => p.specialization);
+    const fromProg = prog.filter(p => p.school_id === sid && p.job_title_id === ti.id && p.selected).map(p => p.specialization || '');
+    const all = [...new Set([...fromLabs, ...fromPlan, ...fromProg, ...(extraSpecs[`${sid}:${ti.id}`] || [])])];
+    return [...all.filter(s => s), ...(all.includes('') ? [''] : [])];
+  }
+  function specRows(sid, r, ti) {
+    const specs = specList(sid, ti);
+    const labs = ti.per_lab ? schoolLabs(sid) : [];
+    if (!specs.length) return `<tr class="sub"><td colspan="${6 + years.length}"><span class="muted">${esc(t('spec_plan_hint'))}</span></td></tr>`;
+    return specs.map(spec => {
+      const lab = labs.find(l => l.name === spec);
+      const selAll = prog.filter(p => p.school_id === sid && p.job_title_id === ti.id && (p.specialization || '') === spec).reduce((a, x) => a + x.selected, 0);
+      const need = lab ? lab.approved_count - lab.current_staff : null;
+      let tp = 0;
+      const cells = years.map(y => {
+        const pl = plan.filter(p => p.school_id === sid && p.job_title_id === ti.id && p.year_id === y.id && p.specialization === spec).reduce((a, x) => a + x.planned_count, 0);
+        const se = prog.filter(p => p.school_id === sid && p.job_title_id === ti.id && p.year_id === y.id && (p.specialization || '') === spec).reduce((a, x) => a + x.selected, 0);
+        tp += pl;
+        return `<td class="n" style="white-space:nowrap">${editable
+          ? `<input class="num" type="number" min="0" value="${pl || ''}" placeholder="0" data-st="${ti.id}" data-y="${y.id}" data-spec="${esc(spec)}">`
+          : `<b>${num(pl)}</b>`}<span class="cell-sub">${se ? `✓ ${num(se)}` : ''}</span></td>`;
+      }).join('');
+      const gap = need === null ? null : need - tp;
+      exportRows.push({ [t('department')]: nm(ref.dept[r.department_id]), [t('job_title')]: `   ↳ ${spec ? specLabel(spec) : t('not_specified')}`,
+        [t('approved')]: lab ? lab.approved_count : '', [t('current_staff')]: lab ? lab.current_staff : '', [t('remaining')]: lab ? need - selAll : '',
+        ...Object.fromEntries(years.flatMap(y => {
+          const pl = plan.filter(p => p.school_id === sid && p.job_title_id === ti.id && p.year_id === y.id && p.specialization === spec).reduce((a, x) => a + x.planned_count, 0);
+          const se = prog.filter(p => p.school_id === sid && p.job_title_id === ti.id && p.year_id === y.id && (p.specialization || '') === spec).reduce((a, x) => a + x.selected, 0);
+          return [[`${t('planned')} ${y.label}`, pl], [`${t('selected')} ${y.label}`, se]];
+        })), [t('plan_total')]: tp, [t('gap')]: gap ?? '' });
+      return `<tr class="sub ${spec ? '' : 'unassigned'}"><td>${esc(spec ? specLabel(spec) : t('not_specified'))}</td>
+        <td class="n">${lab ? num(lab.approved_count) : '<span class="muted">–</span>'}</td><td class="n">${lab ? num(lab.current_staff) : '<span class="muted">–</span>'}</td>
+        <td class="n">${lab ? num(need - selAll) : '<span class="muted">–</span>'}</td>${cells}<td class="n"><b>${num(tp)}</b></td>
+        <td class="n ${gap === null ? '' : gap > 0 ? 'pos' : gap < 0 ? 'neg' : 'zero'}">${gap === null ? '' : num(gap) + (gap < 0 ? ' ⚠' : '')}</td></tr>`;
+    }).join('');
+  }
+  async function saveSpec(sid, tid, yid, spec, v) {
+    const ex = plan.find(p => p.school_id === sid && p.job_title_id === tid && p.year_id === yid && p.specialization === spec);
+    if (ex && !v) await db.remove('hiring_plan', ex.id);
+    else if (ex) await db.update('hiring_plan', ex.id, { planned_count: v, updated_at: new Date().toISOString(), updated_by: state.profile.id });
+    else if (v) await db.insert('hiring_plan', { school_id: sid, job_title_id: tid, year_id: yid, specialization: spec, planned_count: v, updated_at: new Date().toISOString(), updated_by: state.profile.id });
+    [plan, prog] = await Promise.all([
+      db.list('hiring_plan', { eq: { school_id: locked || undefined } }),
+      db.list('v_plan_status', { eq: { school_id: locked || undefined } }),
+    ]);
+  }
+  function addSpec(sid, tid) {
+    modal({
+      title: `${t('add_spec')}: ${titleName(tid)} — ${schoolName(sid)}`,
+      body: `<label>${esc(t('lab_or_spec'))}<select id="newspec">${labOptions('', t('choose_lab'))}</select></label>`,
+      onSave: async (w) => {
+        const v = w.querySelector('#newspec').value;
+        if (!v) return false;
+        const k = `${sid}:${tid}`;
+        extraSpecs[k] = [...new Set([...(extraSpecs[k] || []), v])];
+        draw();
+      },
     });
   }
 

@@ -77,6 +77,7 @@ export const DICT = {
     strengths: 'Strengths', weaknesses: 'Areas of concern', general_notes: 'General notes', interview_result: 'Decision',
     assign_on_accept: 'Assign candidate to this school, title and year', pick_title_first: 'Choose a job title to load its criteria.',
     panel_name: 'Interviewer name', panel_title: 'Job title', add_interviewer: 'Add interviewer', signature: 'Signature',
+    lab_or_spec: 'Lab / specialisation', add_spec: 'Add lab / specialisation', not_specified: 'Not specified yet', spec_plan_hint: 'Enter the number to hire for each lab / specialisation; the title row is their total.',
     lab: 'Lab', choose_lab: 'Choose the lab…', labs: 'Specialised labs', lab_unassigned: 'Not linked to a lab yet', add_lab: 'Add lab',
     labs_total_hint: 'The approved total for this title is the sum of the labs below.', no_labs: 'No labs listed for this school yet — add them with Edit.',
     lab_staff_hint: 'Staff per lab is optional; staff not linked to a lab appear on a separate line.', total_staff: 'Total staff in post (2026/27)', rubric: 'Rubric', scale_hint: '1 = Weak · 2 = Below expectations · 3 = Meets · 4 = Strong · 5 = Outstanding',
@@ -171,6 +172,7 @@ export const DICT = {
     strengths: 'نقاط القوة', weaknesses: 'نقاط تحتاج انتباه', general_notes: 'ملاحظات عامة', interview_result: 'القرار',
     assign_on_accept: 'إسناد المرشح لهذه المدرسة والمسمى والسنة', pick_title_first: 'اختر المسمى الوظيفي لتحميل بنود التقييم.',
     panel_name: 'اسم عضو اللجنة', panel_title: 'المسمى الوظيفي', add_interviewer: 'إضافة عضو', signature: 'التوقيع',
+    lab_or_spec: 'المختبر / التخصص', add_spec: 'إضافة مختبر / تخصص', not_specified: 'غير محدد بعد', spec_plan_hint: 'أدخل عدد المطلوب تعيينهم لكل مختبر / تخصص؛ وسطر المسمى هو مجموعها.',
     lab: 'المختبر', choose_lab: 'اختر المختبر…', labs: 'المختبرات التخصصية', lab_unassigned: 'غير مرتبط بمختبر بعد', add_lab: 'إضافة مختبر',
     labs_total_hint: 'إجمالي المعتمد لهذا المسمى هو مجموع المختبرات أدناه.', no_labs: 'لم تُسجَّل مختبرات لهذه المدرسة بعد — أضفها من زر تعديل.',
     lab_staff_hint: 'عدد الموظفين لكل مختبر اختياري؛ ويظهر من لم يُربط بمختبر في سطر مستقل.', total_staff: 'إجمالي الموظفين على رأس العمل (2026/27)', rubric: 'نموذج التقييم', scale_hint: '1 = ضعيف · 2 = دون المتوقع · 3 = يلبي المتوقع · 4 = قوي · 5 = متميز',
@@ -239,6 +241,9 @@ export const LABS = [
   ['Robotics', 'الروبوتات'], ['BioMed', 'الطب الحيوي'], ['Communication', 'الاتصالات'], ['VR & AR', 'الواقع الافتراضي والمعزز'],
   ['Medical Simulation', 'المحاكاة الطبية'], ['Space science', 'علوم الفضاء'], ['Drones', 'الطائرات المسيّرة'],
 ];
+
+// Science specialisations (e.g. for lab technicians)
+export const SCIENCES = [['Chemistry', 'الكيمياء'], ['Physics', 'الفيزياء'], ['Biology', 'الأحياء'], ['General science', 'العلوم العامة']];
 
 export const RATING_BANDS = [
   { key: 'excellent', min: 90 }, { key: 'very_good', min: 80 }, { key: 'good', min: 70 }, { key: 'average', min: 60 }, { key: 'weak', min: 0 },

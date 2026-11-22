@@ -1,5 +1,5 @@
 // Shared state & helpers used by every view
-import { DICT, ENUMS, ratingFor, LABS } from './i18n.js';
+import { DICT, ENUMS, ratingFor, LABS, SCIENCES } from './i18n.js';
 import { db } from './api.js';
 
 export const state = {
@@ -70,15 +70,19 @@ export async function loadRef() {
 // specialisation / lab name in the current language (labs are stored by English name)
 export function specLabel(v) {
   if (!v) return '';
-  const l = LABS.find(x => x[0].toLowerCase() === String(v).toLowerCase());
+  const l = [...LABS, ...SCIENCES].find(x => x[0].toLowerCase() === String(v).toLowerCase());
   return l ? l[state.lang === 'ar' ? 1 : 0] : v;
 }
 export const isLabTitle = (tid) => (state.ref.title[tid] || {}).category === 'lab';
+// titles whose hiring plan is entered per lab / specialisation
+export const planBySpec = (ti) => !!ti && (ti.per_lab || ti.rubric_key === 'lab_technician');
 export function labOptions(selected, empty = t('choose_lab')) {
-  const known = LABS.some(l => l[0] === selected);
+  const known = [...LABS, ...SCIENCES].some(l => l[0] === selected);
+  const opt = (l) => `<option value="${esc(l[0])}" ${l[0] === selected ? 'selected' : ''}>${esc(l[state.lang === 'ar' ? 1 : 0])}</option>`;
   return `<option value="">${esc(empty)}</option>` +
     (selected && !known ? `<option value="${esc(selected)}" selected>${esc(selected)}</option>` : '') +
-    LABS.map(l => `<option value="${esc(l[0])}" ${l[0] === selected ? 'selected' : ''}>${esc(l[state.lang === 'ar' ? 1 : 0])}</option>`).join('');
+    `<optgroup label="${esc(t('labs'))}">${LABS.map(opt).join('')}</optgroup>` +
+    `<optgroup label="${esc(t('specialization'))}">${SCIENCES.map(opt).join('')}</optgroup>`;
 }
 // interview panel: [{name, title}] (falls back to the old "interviewers" text)
 export function panelOf(iv) {
