@@ -98,7 +98,7 @@ create table public.hiring_plan (
 -- 2. Users & permissions
 -- ---------------------------------------------------------------------
 -- role: admin       – everything incl. approving users & settings
---       hr          – recruitment officer: candidates, interviews, pipeline, hiring plan
+--       hr          – recruitment officer: candidates, interviews, pipeline (view plan & vacancies)
 --       interviewer – records interviews & candidates, edits own interviews
 --       principal   – sees own school's candidates, updates onboarding steps
 --       viewer      – read-only dashboards & reports
@@ -530,9 +530,9 @@ begin
   end loop;
 end $$;
 
--- hiring plan: admin + HR
-create policy "plan read"   on public.hiring_plan for select using (public.can_read());
-create policy "plan manage" on public.hiring_plan for all using (public.can_manage()) with check (public.can_manage());
+-- hiring plan: everyone approved can view, only admins can change
+create policy "plan read"  on public.hiring_plan for select using (public.can_read());
+create policy "plan admin" on public.hiring_plan for all using (public.is_admin()) with check (public.is_admin());
 
 -- profiles
 create policy "profile self read"  on public.profiles for select using (id = auth.uid() or public.is_admin());

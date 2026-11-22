@@ -94,7 +94,7 @@ export const DICT = {
     // users
     users_title: 'Users & permissions', pending_requests: 'Pending requests', approve: 'Approve', reject: 'Reject',
     disable: 'Disable', enable: 'Enable', requested: 'Requested', registered: 'Registered', you: 'You',
-    role_help: 'Admin: everything · HR: candidates, interviews, pipeline, plan · Interviewer: record interviews · Principal: own school only, onboarding steps · Viewer: read-only',
+    role_help: 'Admin: everything, incl. vacancies & hiring plan · HR: candidates, interviews, pipeline · Interviewer: record interviews · Principal: own school only, onboarding steps · Viewer: read-only',
     school_required: 'Principals need a school',
 
     // settings
@@ -189,7 +189,7 @@ export const DICT = {
 
     users_title: 'المستخدمون والصلاحيات', pending_requests: 'طلبات بانتظار الاعتماد', approve: 'اعتماد', reject: 'رفض',
     disable: 'إيقاف', enable: 'تفعيل', requested: 'المطلوب', registered: 'تاريخ التسجيل', you: 'أنت',
-    role_help: 'مسؤول: كل شيء · موارد بشرية: المرشحون والمقابلات والمسار والخطة · مُقابِل: تسجيل المقابلات · مدير مدرسة: مدرسته فقط ومراحل المباشرة · مُطّلع: قراءة فقط',
+    role_help: 'مسؤول: كل شيء بما فيه الشواغر وخطة التعيين · موارد بشرية: المرشحون والمقابلات والمسار · مُقابِل: تسجيل المقابلات · مدير مدرسة: مدرسته فقط ومراحل المباشرة · مُطّلع: قراءة فقط',
     school_required: 'يجب تحديد مدرسة لمدير المدرسة',
 
     settings_years: 'الأعوام الدراسية', settings_rubrics: 'بنود تقييم المقابلات', settings_titles: 'المسميات الوظيفية',

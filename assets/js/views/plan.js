@@ -9,7 +9,7 @@ import { state, t, esc, num, nm, can, lockedSchool, visibleSchools, schoolName, 
 export async function render(el, ctx) {
   const ref = state.ref;
   const locked = lockedSchool();
-  const editable = can('manage');
+  const editable = can('admin');   // only administrators change the hiring plan
   let school = String(locked || ctx.params.school || 'all');
   let dept = '';
 
