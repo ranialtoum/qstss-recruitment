@@ -79,7 +79,7 @@ export async function render(el, ctx) {
     const tot = { y: {}, tp: 0, gap: 0 };
     let lastDept = null;
     for (const r of rows) {
-      if (r.department_id !== lastDept) { lastDept = r.department_id; html += `<tr class="group"><td colspan="${6 + years.length}">${esc(nm(ref.dept[r.department_id]))}</td></tr>`; }
+      if (r.department_id !== lastDept) { lastDept = r.department_id; html += `<tr class="group"><td colspan="${6 + years.length}"><span class="stick">${esc(nm(ref.dept[r.department_id]))}</span></td></tr>`; }
       const need = r.approved_count - r.current_staff;
       const ti = ref.title[r.job_title_id];
       const bySpec = planBySpec(ti);
@@ -109,7 +109,7 @@ export async function render(el, ctx) {
         <td class="n ${gap > 0 ? 'pos' : gap < 0 ? 'neg' : 'zero'}" title="${gap < 0 ? esc(t('plan_exceeds')) : ''}">${num(gap)}${gap < 0 ? ' ⚠' : ''}</td></tr>`;
       if (bySpec) html += specRows(sid, r, ti);
     }
-    html += `</tbody><tfoot><tr><td colspan="4">${esc(t('total'))}</td>${years.map(y => `<td class="n">${num(tot.y[y.id]?.pl || 0)}<span class="cell-sub">✓ ${num(tot.y[y.id]?.se || 0)}</span></td>`).join('')}
+    html += `</tbody><tfoot><tr><td>${esc(t('total'))}</td><td></td><td></td><td></td>${years.map(y => `<td class="n">${num(tot.y[y.id]?.pl || 0)}<span class="cell-sub">✓ ${num(tot.y[y.id]?.se || 0)}</span></td>`).join('')}
       <td class="n">${num(tot.tp)}</td><td class="n">${num(tot.gap)}</td></tr></tfoot></table></div>`;
     body.innerHTML = html;
 

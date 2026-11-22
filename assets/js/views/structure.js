@@ -49,7 +49,7 @@ export async function render(el, ctx) {
       const tot = { a: 0, c: 0, s: 0, r: 0, per: {} };
       for (const d of ref.departments) {
         const titles = ref.titles.filter(x => x.department_id === d.id);
-        html += `<tr class="group"><td colspan="${5 + schools.length}">${esc(nm(d))}</td></tr>`;
+        html += `<tr class="group"><td colspan="${5 + schools.length}"><span class="stick">${esc(nm(d))}</span></td></tr>`;
         for (const ti of titles) {
           const rows = pos.filter(r => r.job_title_id === ti.id);
           if (!rows.length) continue;
@@ -93,7 +93,7 @@ export async function render(el, ctx) {
     const sid = Number(school);
     const rows = pos.filter(r => r.school_id === sid);
     const yp = (tid, yid) => plan.filter(p => p.school_id === sid && p.job_title_id === tid && p.year_id === yid);
-    let html = `<div class="table-wrap"><table><thead><tr><th>${esc(t('job_title'))}</th><th>${esc(t('reports_to'))}</th>
+    let html = `<div class="table-wrap"><table class="plan"><thead><tr><th>${esc(t('job_title'))}</th><th>${esc(t('reports_to'))}</th>
       <th class="n">${esc(t('approved'))}</th><th class="n">${esc(t('current_staff'))}</th><th class="n">${esc(t('selected'))}</th>
       <th class="n">${esc(t('hired'))}</th><th class="n">${esc(t('joined'))}</th><th class="n">${esc(t('remaining'))}</th><th>${esc(t('vacancy_status'))}</th>
       ${years.map(y => `<th class="n">${esc(y.label)}<span class="cell-sub">${esc(t('selected'))} / ${esc(t('planned'))}</span></th>`).join('')}
@@ -102,7 +102,7 @@ export async function render(el, ctx) {
     for (const d of ref.departments) {
       const drows = rows.filter(r => r.department_id === d.id).sort((a, b) => ref.title[a.job_title_id].sort - ref.title[b.job_title_id].sort);
       if (!drows.length) continue;
-      html += `<tr class="group"><td colspan="${9 + years.length + (can('admin') ? 1 : 0)}">${esc(nm(d))}</td></tr>`;
+      html += `<tr class="group"><td colspan="${9 + years.length + (can('admin') ? 1 : 0)}"><span class="stick">${esc(nm(d))}</span></td></tr>`;
       for (const r of drows) {
         const ti = ref.title[r.job_title_id];
         tot.a += r.approved_count; tot.c += r.current_staff; tot.s += r.selected; tot.h += r.hired; tot.j += r.joined; tot.r += Math.max(0, r.remaining);
@@ -138,7 +138,7 @@ export async function render(el, ctx) {
         }
       }
     }
-    html += `</tbody><tfoot><tr><td colspan="2">${esc(t('total'))}</td><td class="n">${num(tot.a)}</td><td class="n">${num(tot.c)}</td><td class="n">${num(tot.s)}</td>
+    html += `</tbody><tfoot><tr><td>${esc(t('total'))}</td><td></td><td class="n">${num(tot.a)}</td><td class="n">${num(tot.c)}</td><td class="n">${num(tot.s)}</td>
       <td class="n">${num(tot.h)}</td><td class="n">${num(tot.j)}</td><td class="n">${num(tot.r)}</td><td></td>
       ${years.map(y => `<td class="n">${num(tot.y[y.id]?.se || 0)} / ${num(tot.y[y.id]?.pl || 0)}</td>`).join('')}${can('admin') ? '<td></td>' : ''}</tr></tfoot></table></div>`;
     body.innerHTML = html;
