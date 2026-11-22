@@ -72,7 +72,7 @@ update public.profiles set role = 'admin', status = 'approved' where email = 'yo
 
 ## English – setup
 
-1. **Supabase**: create a project → SQL Editor → run `supabase/01_schema.sql`, then `supabase/02_seed.sql`, then `supabase/03_interview_lab.sql` `supabase/04_lab_breakdown.sql` and `supabase/05_interview_panel.sql`. In *Authentication → Providers → Email* consider turning **Confirm email** off (admin approval already gates access, and Supabase's built-in mailer is heavily rate-limited) or configure your own SMTP.
+1. **Supabase**: create a project → SQL Editor → run `supabase/01_schema.sql`, then `supabase/02_seed.sql`, then `supabase/03_interview_lab.sql` `supabase/04_lab_breakdown.sql`, `supabase/05_interview_panel.sql` and `supabase/06_lab_plan_details_only.sql`. In *Authentication → Providers → Email* consider turning **Confirm email** off (admin approval already gates access, and Supabase's built-in mailer is heavily rate-limited) or configure your own SMTP.
 2. **Connect**: put the *Project URL* and the *publishable key* (`sb_publishable_…`, from the project's **Connect** dialog or Settings → API Keys) in `assets/js/config.js`.
 3. **GitHub Pages**: push the repo, *Settings → Pages → Deploy from a branch → main / root*. Add the site URL to Supabase *Authentication → URL Configuration* (Site URL + Redirect URLs).
 4. **First admin**: register in the app, then run in the SQL editor
@@ -104,6 +104,7 @@ supabase/02_seed.sql       data generated from the staffing workbook
 supabase/03_interview_lab.sql  update: lab / specialisation stored on each interview
 supabase/04_lab_breakdown.sql  update: needed number & staff per specialised lab
 supabase/05_interview_panel.sql update: interview panel members with job titles
+supabase/06_lab_plan_details_only.sql update: lab roles planned per lab only (old unspecified numbers backed up)
 tools/build_seed.py        regenerates 02_seed.sql from an updated workbook
 tests/                     local PostgreSQL permission tests + browser end-to-end test
 ```

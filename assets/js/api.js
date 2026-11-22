@@ -32,6 +32,8 @@ export const db = {
       let q = sb.from(table).select(opts.select || '*');
       q = applyFilters(q, opts).range(from, from + PAGE - 1);
       const rows = check(await q);
+      // reporting views: make sure counts are numbers (some servers send large integers as text)
+      if (table.startsWith('v_')) rows.forEach(r => { for (const k in r) if (k !== 'specialization' && typeof r[k] === 'string' && /^-?\d+$/.test(r[k])) r[k] = Number(r[k]); });
       out.push(...rows);
       if (rows.length < PAGE || (opts.limit && out.length >= opts.limit)) break;
     }

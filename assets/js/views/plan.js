@@ -39,7 +39,9 @@ export async function render(el, ctx) {
     for (const k of pending.keys()) { const [a, b, c, ...rest] = k.split('|'); if (+a === sid && +b === tid && +c === yid) s.add(rest.join('|')); }
     return [...s];
   }
-  const yearTotal = (sid, tid, yid) => specsFor(sid, tid, yid).reduce((a, sp) => a + cellVal(sid, tid, yid, sp), 0);
+  const yearTotal = (sid, tid, yid) => specsFor(sid, tid, yid)
+    .filter(sp => sp || !planBySpec(ref.title[tid]))            // lab-detail titles: only named lines count
+    .reduce((a, sp) => a + cellVal(sid, tid, yid, sp), 0);
   window.qsUnsaved = () => pending.size;
 
   el.innerHTML = `
@@ -176,8 +178,9 @@ export async function render(el, ctx) {
     const fromPlan = plan.filter(p => p.school_id === sid && p.job_title_id === ti.id).map(p => p.specialization);
     const fromProg = prog.filter(p => p.school_id === sid && p.job_title_id === ti.id && p.selected).map(p => p.specialization || '');
     const fromPending = [...pending.keys()].map(k => k.split('|')).filter(k => +k[0] === sid && +k[1] === ti.id).map(k => k.slice(3).join('|'));
-    const all = [...new Set([...fromLabs, ...fromPlan, ...fromProg, ...fromPending, ...(extraSpecs[`${sid}:${ti.id}`] || [])])];
-    return [...all.filter(s => s), ...(all.includes('') ? [''] : [])];
+    const named = [...new Set([...fromLabs, ...fromPlan, ...fromProg, ...fromPending, ...(extraSpecs[`${sid}:${ti.id}`] || [])])].filter(s => s);
+    // '' = selected candidates whose lab was not recorded (shown read-only, not part of the plan)
+    return [...named, ...(fromProg.includes('') ? [''] : [])];
   }
   function specRows(sid, r, ti) {
     const specs = specList(sid, ti);
@@ -189,6 +192,11 @@ export async function render(el, ctx) {
       const need = lab ? lab.approved_count - lab.current_staff : null;
       let tp = 0;
       const exp = {};
+      if (!spec) {   // read-only: candidates selected without a lab
+        return `<tr class="sub unassigned"><td>${esc(t('lab_not_recorded'))}</td><td class="n"></td><td class="n"></td><td class="n"></td>
+          ${years.map(y => { const se = sel(sid, ti.id, y.id, ''); return `<td class="n"><span class="cell-sub">${se ? `✓ ${num(se)}` : ''}</span></td>`; }).join('')}
+          <td class="n"></td><td class="n"></td></tr>`;
+      }
       const cells = years.map(y => {
         const pl = cellVal(sid, ti.id, y.id, spec), se = sel(sid, ti.id, y.id, spec);
         tp += pl; exp[`${t('planned')} ${y.label}`] = pl; exp[`${t('selected')} ${y.label}`] = se;
