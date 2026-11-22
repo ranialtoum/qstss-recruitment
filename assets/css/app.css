@@ -278,3 +278,12 @@ tr.sub td:first-child { padding-inline-start: 2rem; position: relative; }
 tr.sub td:first-child::before { content: '↳'; position: absolute; inset-inline-start: .9rem; color: var(--accent); }
 html[dir=rtl] tr.sub td:first-child::before { content: '↲'; }
 tr.sub.unassigned td { font-style: italic; color: var(--amber); background: #fffbf2; }
+
+.panel-box { margin-top: .9rem; border-top: 1px solid var(--line); padding-top: .8rem; }
+.panel-table { margin-top: .4rem; }
+.panel-table th, .panel-table td { padding: .3rem .4rem; border-bottom: 0; background: transparent; }
+.panel-table th { font-size: .78rem; }
+.panel-chip { display: inline-block; margin: 0 .35rem .15rem 0; white-space: nowrap; }
+.panel-chip small { color: var(--ink-3); }
+.print-only { display: none; }
+@media print { .print-only { display: table-cell !important; } .panel-table td.sig { border-bottom: 1px solid #999; min-width: 140px; } }

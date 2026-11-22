@@ -1,7 +1,7 @@
 // Interview record: candidate + role-specific rubric + holistic score /100 with colour-coded rating
 import { db } from '../api.js';
 import { state, t, en, esc, today, options, enumOptions, titleOptions, can, role, nm, titleName, visibleSchools,
-  toast, fail, readForm, validate, ratingBadge, labOptions, isLabTitle, specLabel } from '../core.js';
+  toast, fail, readForm, validate, ratingBadge, labOptions, isLabTitle, specLabel, panelOf, panelText } from '../core.js';
 import { ratingFor, RATING_BANDS } from '../i18n.js';
 import { candidateFields, wireCandidateFields } from './candidate_form.js';
 
@@ -24,7 +24,8 @@ export async function render(el, ctx) {
   const editable = isNew || can('manage') || (role() === 'interviewer' && iv.created_by === state.profile.id);
   const v = iv || {
     interview_date: today(), job_title_id: cand?.job_title_id || '', source: cand?.cv_source || '', source_detail: cand?.cv_source_detail || '',
-    school_id: cand?.school_id || '', scores: {}, criteria_notes: {}, result: 'pending', interviewers: state.profile.full_name || '',
+    school_id: cand?.school_id || '', scores: {}, criteria_notes: {}, result: 'pending',
+    panel: [{ name: state.profile.full_name || '', title: state.profile.position_note || '' }],
   };
   let scores = { ...(v.scores || {}) };
   let notesBy = { ...(v.criteria_notes || {}) };
@@ -49,8 +50,14 @@ export async function render(el, ctx) {
             <label>${esc(t('source'))}<select name="source">${enumOptions('cv_source', v.source)}</select></label>
             <label>${esc(t('source_detail'))}<input name="source_detail" value="${esc(v.source_detail || '')}"></label>
             <label id="modeBox">${esc(t('mode'))}<select name="mode">${enumOptions('mode', v.mode)}</select></label>
-            <label class="span2">${esc(t('interviewers'))}<input name="interviewers" value="${esc(v.interviewers || '')}"></label>
-            <label>${esc(t('recommended_school'))}<select name="school_id" data-type="int">${options(visibleSchools(), v.school_id, { empty: '' })}</select></label>
+            <label class="span2">${esc(t('recommended_school'))}<select name="school_id" data-type="int">${options(visibleSchools(), v.school_id, { empty: '' })}</select></label>
+          </div>
+          <div class="panel-box">
+            <div class="row-between"><b>${esc(t('interviewers'))}</b>
+              ${editable ? `<button type="button" class="btn small no-print" id="addPanel">＋ ${esc(t('add_interviewer'))}</button>` : ''}</div>
+            <datalist id="panel-titles">${panelTitleOptions()}</datalist>
+            <table class="panel-table"><thead><tr><th>${esc(t('panel_name'))}</th><th>${esc(t('panel_title'))}</th>
+              <th class="print-only">${esc(t('signature'))}</th><th class="no-print"></th></tr></thead><tbody id="panelRows"></tbody></table>
           </div>
         </div>
         <div class="card"><div class="row-between"><h3>${esc(t('criteria'))}</h3><small class="muted" id="rubName"></small></div>
@@ -195,6 +202,18 @@ export async function render(el, ctx) {
   $('#ovr').oninput = () => { overallTouched = true; $('#ov').value = $('#ovr').value; showRating(); };
   $('#useComp').onclick = () => { const c = computed(); if (c.score !== null) { $('#ov').value = c.score; $('#ovr').value = c.score; overallTouched = false; showRating(); } };
   form.querySelectorAll('[name=result]').forEach(r => r.onchange = showRating);
+  // ---- interview panel ----
+  const panelRow = (p = {}) => `<tr><td><input class="p-name" value="${esc(p.name || '')}" placeholder="${esc(t('panel_name'))}" ${editable ? '' : 'disabled'}></td>
+    <td><input class="p-title" list="panel-titles" value="${esc(p.title || '')}" placeholder="${esc(t('panel_title'))}" ${editable ? '' : 'disabled'}></td>
+    <td class="print-only sig"></td>
+    <td class="no-print">${editable ? `<button type="button" class="icon-btn p-rm" title="${esc(t('delete'))}">✕</button>` : ''}</td></tr>`;
+  const wirePanel = () => $('#panelRows').querySelectorAll('.p-rm').forEach(b => b.onclick = () => { b.closest('tr').remove(); if (!$('#panelRows').children.length) addPanel(); });
+  const addPanel = (p) => { $('#panelRows').insertAdjacentHTML('beforeend', panelRow(p)); wirePanel(); };
+  const initial = panelOf(v);
+  (initial.length ? initial : [{}]).forEach(addPanel);
+  if ($('#addPanel')) $('#addPanel').onclick = () => { addPanel(); $('#panelRows').lastElementChild.querySelector('.p-name').focus(); };
+  const readPanel = () => [...$('#panelRows').querySelectorAll('tr')].map(tr => ({ name: tr.querySelector('.p-name').value.trim(), title: tr.querySelector('.p-title').value.trim() })).filter(p => p.name);
+
   drawCand(); drawCrit(); toggleMode();
   if (!editable) form.querySelectorAll('input,select,textarea,button').forEach(x => { if (!x.closest('.no-print')) x.disabled = true; });
 
@@ -228,6 +247,9 @@ export async function render(el, ctx) {
         notes: form.querySelector('[name=notes]').value || null, result, updated_at: new Date().toISOString(),
       };
       if (ref.ivLab) row.specialization = lab || null;   // the database copies it to the candidate
+      const panel = readPanel();
+      row.interviewers = panelText(panel) || null;
+      if (ref.ivPanel) row.panel = panel;
       if (isNew) await db.insert('interviews', row); else await db.update('interviews', iv.id, row);
       const patch = {};
       if (!ref.ivLab && candMode !== 'new' && lab && lab !== candidate.specialization) patch.specialization = lab;
@@ -247,4 +269,13 @@ export async function render(el, ctx) {
     if (!confirm(t('confirm_delete'))) return;
     try { await db.remove('interviews', iv.id); location.hash = `#/candidate/${iv.candidate_id}`; } catch (e) { fail(e); }
   };
+}
+
+// suggestions for panel members' job titles: leadership roles + all job titles in the system
+function panelTitleOptions() {
+  const extra = state.lang === 'ar'
+    ? ['المدير الأكاديمي', 'مدير الموارد البشرية', 'أخصائي توظيف', 'ممثل الوزارة']
+    : ['Academic Director', 'HR Manager', 'Recruitment Specialist', 'Ministry Representative'];
+  const names = [...extra, ...state.ref.titles.map(x => nm(x))];
+  return [...new Set(names)].map(n => `<option value="${esc(n)}">`).join('');
 }

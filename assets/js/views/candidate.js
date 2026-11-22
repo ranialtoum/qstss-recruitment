@@ -1,7 +1,7 @@
 // Candidate profile: data, vacancy, full employment journey, interviews, history
 import { db } from '../api.js';
 import { state, t, en, esc, num, fmtDate, today, can, schoolName, titleName, deptName, yearLabel, stageBadge, resultBadge,
-  ratingBadge, vacancyBadge, modal, toast, fail, readForm, role, specLabel, isLabTitle } from '../core.js';
+  ratingBadge, vacancyBadge, modal, toast, fail, readForm, role, specLabel, isLabTitle, panelHtml } from '../core.js';
 import { openCandidateForm } from './candidate_form.js';
 
 const STEPS = [
@@ -75,7 +75,7 @@ export async function render(el, ctx) {
           ${interviews.length ? `<div class="table-wrap"><table><thead><tr><th>${esc(t('date'))}</th><th>${esc(t('job_title'))}</th><th>${esc(t('source'))}</th>
             <th>${esc(t('rating'))}</th><th>${esc(t('interview_result'))}</th></tr></thead><tbody>
             ${interviews.map(i => `<tr class="clickable" data-i="${i.id}"><td>${fmtDate(i.interview_date)}</td><td>${esc(titleName(i.job_title_id))}</td>
-              <td>${esc(en('cv_source', i.source))}${i.mode ? ` · ${esc(en('mode', i.mode))}` : ''}${i.interviewers ? `<span class="cell-sub">${esc(i.interviewers)}</span>` : ''}</td>
+              <td>${esc(en('cv_source', i.source))}${i.mode ? ` · ${esc(en('mode', i.mode))}` : ''}${(i.interviewers || (i.panel || []).length) ? `<span class="cell-sub">${panelHtml(i)}</span>` : ''}</td>
               <td>${ratingBadge(i.overall_score, i.rating)}</td><td>${resultBadge(i.result)}</td></tr>`).join('')}</tbody></table></div>`
             : `<div class="empty">${esc(t('no_records'))}</div>`}
         </div>

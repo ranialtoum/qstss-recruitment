@@ -63,8 +63,9 @@ export async function loadRef() {
     planYears: years.filter(y => !y.is_baseline),
     currentYear: years.find(y => y.is_current) || years.find(y => !y.is_baseline) || years[0],
   };
-  // does the database have update 03 (lab stored on each interview)?
+  // does the database have update 03 (lab on each interview) and update 05 (panel with job titles)?
   try { await db.list('interviews', { select: 'specialization', limit: 1 }); state.ref.ivLab = true; } catch (e) { state.ref.ivLab = false; }
+  try { await db.list('interviews', { select: 'panel', limit: 1 }); state.ref.ivPanel = true; } catch (e) { state.ref.ivPanel = false; }
 }
 // specialisation / lab name in the current language (labs are stored by English name)
 export function specLabel(v) {
@@ -79,6 +80,16 @@ export function labOptions(selected, empty = t('choose_lab')) {
     (selected && !known ? `<option value="${esc(selected)}" selected>${esc(selected)}</option>` : '') +
     LABS.map(l => `<option value="${esc(l[0])}" ${l[0] === selected ? 'selected' : ''}>${esc(l[state.lang === 'ar' ? 1 : 0])}</option>`).join('');
 }
+// interview panel: [{name, title}] (falls back to the old "interviewers" text)
+export function panelOf(iv) {
+  if (iv && Array.isArray(iv.panel) && iv.panel.length) return iv.panel.filter(p => p && (p.name || p.title));
+  return String(iv?.interviewers || '').split(';').map(s => s.trim()).filter(Boolean).map(s => {
+    const m = s.match(/^(.*?)\s*\(([^()]*)\)$/);   // "Name (Title)"
+    return m ? { name: m[1].trim(), title: m[2].trim() } : { name: s, title: '' };
+  });
+}
+export const panelText = (rows) => rows.filter(r => r.name).map(r => (r.title ? `${r.name} (${r.title})` : r.name)).join('; ');
+export const panelHtml = (iv) => panelOf(iv).map(p => `<span class="panel-chip"><b>${esc(p.name)}</b>${p.title ? ` <small>${esc(p.title)}</small>` : ''}</span>`).join(' ');
 export const schoolName = (id) => nm(state.ref.school[id]) || '';
 export const titleName = (id) => nm(state.ref.title[id]) || '';
 export const deptName = (id) => nm(state.ref.dept[id]) || '';

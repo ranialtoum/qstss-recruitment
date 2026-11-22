@@ -1,6 +1,6 @@
 import { db } from '../api.js';
 import { state, t, en, esc, num, fmtDate, options, titleOptions, enumOptions, can, visibleSchools, schoolName, titleName,
-  ratingBadge, resultBadge, exportXlsx, specLabel } from '../core.js';
+  ratingBadge, resultBadge, exportXlsx, specLabel, panelHtml, panelOf } from '../core.js';
 
 export async function render(el, ctx) {
   const ref = state.ref;
@@ -33,7 +33,7 @@ export async function render(el, ctx) {
     exportXlsx([{ name: t('interview_list'), rows: rows.map(i => {
       const c = cand[i.candidate_id] || {};
       const base = { [t('date')]: i.interview_date, [t('full_name')]: c.full_name, [t('nationality')]: c.nationality || '', [t('job_title')]: titleName(i.job_title_id), [t('specialization')]: specLabel(i.specialization || c.specialization),
-        [t('source')]: en('cv_source', i.source), [t('source_detail')]: i.source_detail || '', [t('mode')]: en('mode', i.mode), [t('interviewers')]: i.interviewers || '',
+        [t('source')]: en('cv_source', i.source), [t('source_detail')]: i.source_detail || '', [t('mode')]: en('mode', i.mode), [t('interviewers')]: panelOf(i).map(p => p.name).join('; '), [t('panel_title')]: panelOf(i).map(p => p.title || '—').join('; '),
         [t('recommended_school')]: schoolName(i.school_id), [t('computed_score')]: i.computed_score ?? '', [t('overall_score')]: i.overall_score ?? '',
         [t('rating')]: en('rating', i.rating), [t('interview_result')]: en('result', i.result), [t('strengths')]: i.strengths || '', [t('weaknesses')]: i.weaknesses || '', [t('notes')]: i.notes || '' };
       // criteria scores as extra columns
@@ -58,7 +58,7 @@ export async function render(el, ctx) {
       <tbody>${rows.map(i => { const c = cand[i.candidate_id] || {}; return `<tr class="clickable" data-id="${i.id}"><td>${fmtDate(i.interview_date)}</td>
         <td><b>${esc(c.full_name || '')}</b><span class="cell-sub">${esc(c.nationality || '')}</span></td><td>${esc(titleName(i.job_title_id))}${(i.specialization || c.specialization) ? `<span class="cell-sub">${esc(specLabel(i.specialization || c.specialization))}</span>` : ''}</td>
         <td>${esc(en('cv_source', i.source))}${i.mode ? `<span class="cell-sub">${esc(en('mode', i.mode))}</span>` : ''}</td>
-        <td><small>${esc(i.interviewers || '')}</small></td><td>${ratingBadge(i.overall_score, i.rating)}</td><td>${resultBadge(i.result)}</td></tr>`; }).join('')}</tbody></table></div>`
+        <td>${panelHtml(i)}</td><td>${ratingBadge(i.overall_score, i.rating)}</td><td>${resultBadge(i.result)}</td></tr>`; }).join('')}</tbody></table></div>`
       : `<div class="empty card">${esc(t('no_records'))}</div>`;
     el.querySelectorAll('tr[data-id]').forEach(tr => tr.onclick = () => { location.hash = `#/interview/${tr.dataset.id}`; });
   }
