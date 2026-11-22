@@ -146,8 +146,8 @@ function layout() {
       <div><b>${esc(t('org_name'))}</b><span>${esc(t('app_full'))}</span></div><time>${new Date().toLocaleDateString(state.lang === 'ar' ? 'ar-QA-u-nu-latn' : 'en-GB')}</time></div>
       <div id="view"></div></main>
   </div>`;
-  document.getElementById('lang').onclick = () => { setLang(state.lang === 'en' ? 'ar' : 'en'); render(); };
-  document.getElementById('out').onclick = async () => { await auth.signOut(); location.hash = ''; boot(); };
+  document.getElementById('lang').onclick = () => { if (!leaveOk()) return; window.qsUnsaved = null; setLang(state.lang === 'en' ? 'ar' : 'en'); render(); };
+  document.getElementById('out').onclick = async () => { if (!leaveOk()) return; window.qsUnsaved = null; await auth.signOut(); location.hash = ''; boot(); };
   document.getElementById('menu').onclick = () => document.getElementById('nav').classList.toggle('open');
 }
 
@@ -197,6 +197,16 @@ async function boot() {
   render();
 }
 
-window.addEventListener('hashchange', () => { if (document.getElementById('view')) route(); });
+// pages with unsaved edits set window.qsUnsaved = () => count
+const unsaved = () => (typeof window.qsUnsaved === 'function' ? window.qsUnsaved() : 0);
+export const leaveOk = () => !unsaved() || confirm(t('unsaved_leave'));
+let lastHash = location.hash, skipHash = false;
+window.addEventListener('hashchange', () => {
+  if (skipHash) { skipHash = false; return; }
+  if (!leaveOk()) { skipHash = true; location.hash = lastHash; return; }
+  window.qsUnsaved = null; lastHash = location.hash;
+  if (document.getElementById('view')) route();
+});
+window.addEventListener('beforeunload', (e) => { if (unsaved()) { e.preventDefault(); e.returnValue = ''; } });
 if (configured) auth.onChange((event) => { if (event === 'PASSWORD_RECOVERY') setTimeout(recoveryView, 0); });
 boot();

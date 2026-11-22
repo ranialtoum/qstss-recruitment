@@ -39,7 +39,7 @@ export const DICT = {
     edit_structure: 'Edit counts', candidates_for: 'Candidates for',
 
     // plan
-    plan_title: 'Hiring plan by year', plan_hint: 'Enter how many people to hire for each job title in each year. Use the breakdown button to split a number by specialisation.',
+    plan_title: 'Hiring plan by year', plan_hint: 'Enter how many people to hire for each job title in each year, then click “Save all changes”. Use the breakdown button to split a number by specialisation.',
     breakdown: 'Breakdown by specialisation', add_row: 'Add row', plan_total: 'Total planned', gap: 'Not yet planned',
     plan_exceeds: 'Plan exceeds remaining vacancies',
 
@@ -77,6 +77,8 @@ export const DICT = {
     strengths: 'Strengths', weaknesses: 'Areas of concern', general_notes: 'General notes', interview_result: 'Decision',
     assign_on_accept: 'Assign candidate to this school, title and year', pick_title_first: 'Choose a job title to load its criteria.',
     panel_name: 'Interviewer name', panel_title: 'Job title', add_interviewer: 'Add interviewer', signature: 'Signature',
+    save_all: 'Save all changes', discard: 'Discard changes', apply: 'Apply', unsaved_n: '{n} unsaved change(s)', saved_n: 'Saved {n} change(s)',
+    unsaved_leave: 'You have unsaved changes. Leave without saving them?', discard_confirm: 'Discard all unsaved changes?',
     lab_or_spec: 'Lab / specialisation', add_spec: 'Add lab / specialisation', not_specified: 'Not specified yet', spec_plan_hint: 'Enter the number to hire for each lab / specialisation; the title row is their total.',
     lab: 'Lab', choose_lab: 'Choose the lab…', labs: 'Specialised labs', lab_unassigned: 'Not linked to a lab yet', add_lab: 'Add lab',
     labs_total_hint: 'The approved total for this title is the sum of the labs below.', no_labs: 'No labs listed for this school yet — add them with Edit.',
@@ -137,7 +139,7 @@ export const DICT = {
     structure_hint: 'المتبقي = المعتمد − موظفو 2026/27 − المرشحون المختارون (من القبول حتى التثبيت). الاستقالة تعيد فتح الشاغر تلقائياً.',
     edit_structure: 'تعديل الأعداد', candidates_for: 'المرشحون لـ',
 
-    plan_title: 'خطة التعيين حسب السنة', plan_hint: 'أدخل عدد المطلوب تعيينهم لكل مسمى في كل سنة. استخدم زر التفصيل لتوزيع العدد على التخصصات.',
+    plan_title: 'خطة التعيين حسب السنة', plan_hint: 'أدخل عدد المطلوب تعيينهم لكل مسمى في كل سنة ثم اضغط «حفظ جميع التعديلات». استخدم زر التفصيل لتوزيع العدد على التخصصات.',
     breakdown: 'التفصيل حسب التخصص', add_row: 'إضافة سطر', plan_total: 'إجمالي المخطط', gap: 'غير مخطط بعد',
     plan_exceeds: 'الخطة تتجاوز الشواغر المتبقية',
 
@@ -172,6 +174,8 @@ export const DICT = {
     strengths: 'نقاط القوة', weaknesses: 'نقاط تحتاج انتباه', general_notes: 'ملاحظات عامة', interview_result: 'القرار',
     assign_on_accept: 'إسناد المرشح لهذه المدرسة والمسمى والسنة', pick_title_first: 'اختر المسمى الوظيفي لتحميل بنود التقييم.',
     panel_name: 'اسم عضو اللجنة', panel_title: 'المسمى الوظيفي', add_interviewer: 'إضافة عضو', signature: 'التوقيع',
+    save_all: 'حفظ جميع التعديلات', discard: 'إلغاء التعديلات', apply: 'تطبيق', unsaved_n: 'تعديلات غير محفوظة: {n}', saved_n: 'تم حفظ {n} تعديل',
+    unsaved_leave: 'لديك تعديلات غير محفوظة. هل تريد المغادرة دون حفظها؟', discard_confirm: 'إلغاء جميع التعديلات غير المحفوظة؟',
     lab_or_spec: 'المختبر / التخصص', add_spec: 'إضافة مختبر / تخصص', not_specified: 'غير محدد بعد', spec_plan_hint: 'أدخل عدد المطلوب تعيينهم لكل مختبر / تخصص؛ وسطر المسمى هو مجموعها.',
     lab: 'المختبر', choose_lab: 'اختر المختبر…', labs: 'المختبرات التخصصية', lab_unassigned: 'غير مرتبط بمختبر بعد', add_lab: 'إضافة مختبر',
     labs_total_hint: 'إجمالي المعتمد لهذا المسمى هو مجموع المختبرات أدناه.', no_labs: 'لم تُسجَّل مختبرات لهذه المدرسة بعد — أضفها من زر تعديل.',

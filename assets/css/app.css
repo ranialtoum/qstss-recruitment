@@ -308,3 +308,14 @@ table.plan tr.group td { position: static; box-shadow: none; background: var(--g
 table.plan .stick { position: sticky; inset-inline-start: .65rem; }
 @media print { .table-wrap:has(> table.plan) { max-height: none; overflow: visible; }
   table.plan th, table.plan td { position: static !important; box-shadow: none !important; } }
+
+/* ---------- unsaved edits ---------- */
+input.num.dirty { background: #fff6dc; border-color: #e0a526; font-weight: 700; }
+.dirty-text { color: #9a6100; }
+.savebar { position: sticky; bottom: 0; z-index: 20; display: flex; align-items: center; gap: .6rem; margin-top: .8rem;
+  padding: .7rem 1rem; background: var(--brand-2); color: #fff; border-radius: var(--radius); box-shadow: 0 -4px 18px rgba(15,22,45,.25); }
+.savebar .btn { border-color: rgba(255,255,255,.35); }
+.savebar .btn:not(.primary) { background: transparent; color: #fff; }
+.savebar .btn.primary { background: #fff; color: var(--brand-2); border-color: #fff; }
+@media print { .savebar { display: none !important; } }
+.view:has(.savebar:not(.hidden)) .table-wrap:has(> table.plan) { max-height: max(300px, calc(100vh - 370px)); }

@@ -35,7 +35,7 @@ with sync_playwright() as p:
     page.click('#tabs button[data-s="2"]'); page.wait_for_timeout(300); shot(page,'07_structure_school2')
     page.goto(BASE+'#/plan?school=1'); page.wait_for_selector('table'); shot(page,'08_plan_school1')
     # edit plan for 2028/2029 AP Physics at school 1
-    inp=page.locator('input[data-t="33"][data-y="3"]'); inp.fill('2'); inp.dispatch_event('change'); page.wait_for_timeout(800)
+    inp=page.locator('input.yv[data-tid="33"][data-y="3"]'); inp.fill('2'); inp.dispatch_event('input'); page.click('#saveall'); page.wait_for_timeout(1200)
     print('plan toast', toasts(page))
     # ---- new interview with new candidate
     page.goto(BASE+'#/interview/new'); page.wait_for_selector('#crit')
