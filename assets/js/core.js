@@ -1,5 +1,5 @@
 // Shared state & helpers used by every view
-import { DICT, ENUMS, ratingFor, LABS, SCIENCES } from './i18n.js';
+import { DICT, ENUMS, ratingFor, LABS, SCIENCES, UNIVERSITIES } from './i18n.js';
 import { db } from './api.js';
 
 export const state = {
@@ -66,6 +66,8 @@ export async function loadRef() {
   // does the database have update 03 (lab on each interview) and update 05 (panel with job titles)?
   try { await db.list('interviews', { select: 'specialization', limit: 1 }); state.ref.ivLab = true; } catch (e) { state.ref.ivLab = false; }
   try { await db.list('interviews', { select: 'panel', limit: 1 }); state.ref.ivPanel = true; } catch (e) { state.ref.ivPanel = false; }
+  // update 08: date of birth / born in Qatar / Qatari mother / Qatar graduate
+  try { await db.list('candidates', { select: 'qatar_university', limit: 1 }); state.ref.candQ = true; } catch (e) { state.ref.candQ = false; }
 }
 // specialisation / lab name in the current language (labs are stored by English name)
 export function specLabel(v) {
@@ -94,6 +96,15 @@ export function panelOf(iv) {
 }
 export const panelText = (rows) => rows.filter(r => r.name).map(r => (r.title ? `${r.name} (${r.title})` : r.name)).join('; ');
 export const panelHtml = (iv) => panelOf(iv).map(p => `<span class="panel-chip"><b>${esc(p.name)}</b>${p.title ? ` <small>${esc(p.title)}</small>` : ''}</span>`).join(' ');
+export const uniLabel = (v) => { const u = UNIVERSITIES.find(x => x[0] === v); return u ? u[state.lang === 'ar' ? 1 : 0] : (v || ''); };
+export function ageOf(d) {
+  if (!d) return null;
+  const b = new Date(d), n = new Date();
+  let a = n.getFullYear() - b.getFullYear();
+  if (n.getMonth() < b.getMonth() || (n.getMonth() === b.getMonth() && n.getDate() < b.getDate())) a--;
+  return a >= 0 && a < 120 ? a : null;
+}
+const yn = (v) => (v === null || v === undefined ? '' : en('yes_no', v));
 export const schoolName = (id) => nm(state.ref.school[id]) || '';
 export const titleName = (id) => nm(state.ref.title[id]) || '';
 export const deptName = (id) => nm(state.ref.dept[id]) || '';
@@ -231,6 +242,8 @@ export function candidateRow(c) {
     [t('nationality')]: c.nationality || '', [t('email_addr')]: c.email || '', [t('phone')]: c.phone || '',
     [t('inside_qatar')]: c.inside_qatar === null || c.inside_qatar === undefined ? '' : en('inside_qatar', c.inside_qatar),
     [t('residence_country')]: c.residence_country || '', [t('visa_status')]: en('visa_status', c.visa_status),
+    ...(state.ref.candQ ? { [t('birth_date')]: c.birth_date || '', [t('age')]: ageOf(c.birth_date) ?? '', [t('born_in_qatar')]: yn(c.born_in_qatar),
+      [t('qatari_mother')]: yn(c.qatari_mother), [t('qatar_graduate')]: yn(c.qatar_graduate), [t('qatar_university')]: uniLabel(c.qatar_university) } : {}),
     [t('marital_status')]: en('marital_status', c.marital_status), [t('sons')]: c.sons, [t('daughters')]: c.daughters,
     [t('total_children')]: c.total_children, [t('qualification')]: c.qualification || '', [t('years_experience')]: c.years_experience ?? '',
     [t('result')]: en('result', c.interview_result), [t('last_score')]: c.last_score ?? '', [t('rating')]: en('rating', ratingFor(c.last_score)),

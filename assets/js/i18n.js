@@ -79,6 +79,8 @@ export const DICT = {
     panel_name: 'Interviewer name', panel_title: 'Job title', add_interviewer: 'Add interviewer', signature: 'Signature',
     save_all: 'Save all changes', discard: 'Discard changes', apply: 'Apply', unsaved_n: '{n} unsaved change(s)', saved_n: 'Saved {n} change(s)',
     unsaved_leave: 'You have unsaved changes. Leave without saving them?', discard_confirm: 'Discard all unsaved changes?',
+    sec_qatar: 'Qatar ties & education', birth_date: 'Date of birth', age: 'Age', born_in_qatar: 'Born in Qatar?', qatari_mother: 'Child of a Qatari mother?',
+    qatar_graduate: 'Graduate of a university in Qatar?', qatar_university: 'University', choose_university: 'Choose the university…', other_university: 'Other (type the name)', university_name: 'University name', years_old: 'yrs',
     lab_or_spec: 'Lab / specialisation', add_spec: 'Add lab / specialisation', not_specified: 'Not specified yet', lab_not_recorded: 'Selected – lab not recorded', spec_plan_hint: 'Enter the number to hire for each lab / specialisation; the title row is their total.',
     lab: 'Lab', choose_lab: 'Choose the lab…', labs: 'Specialised labs', lab_unassigned: 'Not linked to a lab yet', add_lab: 'Add lab',
     labs_total_hint: 'The approved total for this title is the sum of the labs below.', no_labs: 'No labs listed for this school yet — add them with Edit.',
@@ -176,6 +178,8 @@ export const DICT = {
     panel_name: 'اسم عضو اللجنة', panel_title: 'المسمى الوظيفي', add_interviewer: 'إضافة عضو', signature: 'التوقيع',
     save_all: 'حفظ جميع التعديلات', discard: 'إلغاء التعديلات', apply: 'تطبيق', unsaved_n: 'تعديلات غير محفوظة: {n}', saved_n: 'تم حفظ {n} تعديل',
     unsaved_leave: 'لديك تعديلات غير محفوظة. هل تريد المغادرة دون حفظها؟', discard_confirm: 'إلغاء جميع التعديلات غير المحفوظة؟',
+    sec_qatar: 'الارتباط بقطر والتعليم', birth_date: 'تاريخ الميلاد', age: 'العمر', born_in_qatar: 'مواليد قطر؟', qatari_mother: 'من أبناء القطريات؟',
+    qatar_graduate: 'خريج جامعة داخل قطر؟', qatar_university: 'الجامعة', choose_university: 'اختر الجامعة…', other_university: 'أخرى (اكتب الاسم)', university_name: 'اسم الجامعة', years_old: 'سنة',
     lab_or_spec: 'المختبر / التخصص', add_spec: 'إضافة مختبر / تخصص', not_specified: 'غير محدد بعد', lab_not_recorded: 'تم اختيارهم – المختبر غير مسجل', spec_plan_hint: 'أدخل عدد المطلوب تعيينهم لكل مختبر / تخصص؛ وسطر المسمى هو مجموعها.',
     lab: 'المختبر', choose_lab: 'اختر المختبر…', labs: 'المختبرات التخصصية', lab_unassigned: 'غير مرتبط بمختبر بعد', add_lab: 'إضافة مختبر',
     labs_total_hint: 'إجمالي المعتمد لهذا المسمى هو مجموع المختبرات أدناه.', no_labs: 'لم تُسجَّل مختبرات لهذه المدرسة بعد — أضفها من زر تعديل.',
@@ -223,6 +227,7 @@ export const ENUMS = {
   marital_status: { single: ['Single', 'أعزب / عزباء'], married: ['Married', 'متزوج / متزوجة'], divorced: ['Divorced', 'مطلق / مطلقة'], widowed: ['Widowed', 'أرمل / أرملة'] },
   gender: { male: ['Male', 'ذكر'], female: ['Female', 'أنثى'] },
   inside_qatar: { true: ['Inside Qatar', 'داخل قطر'], false: ['Outside Qatar', 'خارج قطر'] },
+  yes_no: { true: ['Yes', 'نعم'], false: ['No', 'لا'] },
   offer_status: { pending: ['Offer sent – awaiting reply', 'أُرسل العرض – بانتظار الرد'], accepted: ['Accepted the offer', 'قبل العرض'], declined: ['Declined the offer', 'رفض العرض'] },
   documents_status: { incomplete: ['Incomplete', 'غير مكتملة'], complete: ['Complete', 'مكتملة'] },
   hire_status: { in_progress: ['In progress', 'قيد الإجراء'], hired: ['Appointed', 'تم التعيين'], not_hired: ['Not appointed', 'لم يتم التعيين'] },
@@ -248,6 +253,36 @@ export const LABS = [
 
 // Science specialisations (e.g. for lab technicians)
 export const SCIENCES = [['Chemistry', 'الكيمياء'], ['Physics', 'الفيزياء'], ['Biology', 'الأحياء'], ['General science', 'العلوم العامة']];
+
+// Universities and higher-education institutions in Qatar (value stored = English name)
+export const UNIVERSITIES = [
+  ['Qatar University', 'جامعة قطر'],
+  ['University of Doha for Science and Technology (formerly CNA-Q)', 'جامعة الدوحة للعلوم والتكنولوجيا (كلية شمال الأطلنطي سابقاً)'],
+  ['Hamad Bin Khalifa University', 'جامعة حمد بن خليفة'],
+  ['Lusail University', 'جامعة لوسيل'],
+  ['Doha Institute for Graduate Studies', 'معهد الدوحة للدراسات العليا'],
+  ['Community College of Qatar', 'كلية المجتمع في قطر'],
+  ['Weill Cornell Medicine – Qatar', 'وايل كورنيل للطب – قطر'],
+  ['Texas A&M University at Qatar', 'جامعة تكساس إي أند إم في قطر'],
+  ['Carnegie Mellon University in Qatar', 'جامعة كارنيجي ميلون في قطر'],
+  ['Georgetown University in Qatar', 'جامعة جورجتاون في قطر'],
+  ['Northwestern University in Qatar', 'جامعة نورثوسترن في قطر'],
+  ['VCUarts Qatar', 'جامعة فيرجينيا كومنولث للفنون في قطر'],
+  ['HEC Paris in Qatar', 'إتش إي سي باريس في قطر'],
+  ['University College London Qatar', 'كلية لندن الجامعية – قطر'],
+  ['University of Calgary in Qatar', 'جامعة كالجاري في قطر'],
+  ['Stenden University Qatar', 'جامعة ستندن قطر'],
+  ['Al Rayyan International University College', 'كلية الريان الدولية الجامعية'],
+  ['AFG College with the University of Aberdeen', 'كلية AFG مع جامعة أبردين'],
+  ['City University Qatar', 'سيتي يونيفرسيتي قطر'],
+  ['Oryx University', 'جامعة أوريكس'],
+  ['Barzan University College', 'كلية برزان الجامعية'],
+  ['University Foundation College', 'كلية يونيفرسيتي فاونديشن'],
+  ['National University of Malaysia in Qatar', 'الجامعة الوطنية الماليزية في قطر'],
+  ['Qatar Aeronautical Academy', 'أكاديمية قطر للطيران'],
+  ['Ahmed Bin Mohammed Military College', 'كلية أحمد بن محمد العسكرية'],
+  ['Police College', 'كلية الشرطة'],
+];
 
 export const RATING_BANDS = [
   { key: 'excellent', min: 90 }, { key: 'very_good', min: 80 }, { key: 'good', min: 70 }, { key: 'average', min: 60 }, { key: 'weak', min: 0 },

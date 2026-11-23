@@ -9,7 +9,7 @@ const KEY = 'qstss_rec_cand_filters';
 export async function render(el, ctx) {
   const ref = state.ref;
   const saved = JSON.parse(sessionStorage.getItem(KEY) || '{}');
-  const f = { q: '', school: '', title: '', dept: '', stage: '', nat: '', src: '', year: '', rating: '', inside: '', lab: '', ...saved, ...ctx.params };
+  const f = { q: '', school: '', title: '', dept: '', stage: '', nat: '', src: '', year: '', rating: '', inside: '', lab: '', qgrad: '', ...saved, ...ctx.params };
   const all = await db.list('candidates', { order: [['created_at', false]] });
   if (!ctx.seq()) return;
   const nats = [...new Set(all.map(c => c.nationality).filter(Boolean))].sort();
@@ -31,6 +31,7 @@ export async function render(el, ctx) {
       <label>${esc(t('cv_source'))}<select name="src">${enumOptions('cv_source', f.src, t('all'))}</select></label>
       <label>${esc(t('year'))}<select name="year">${options(ref.planYears, f.year, { empty: t('all'), label: y => y.label })}</select></label>
       <label>${esc(t('inside_qatar'))}<select name="inside">${enumOptions('inside_qatar', f.inside, t('all'))}</select></label>
+      ${state.ref.candQ ? `<label>${esc(t('qatar_graduate'))}<select name="qgrad">${enumOptions('yes_no', f.qgrad, t('all'))}</select></label>` : ''}
       <button class="btn ghost" id="clr">${esc(t('clear'))}</button>
     </div>
     <div class="row-between" style="margin-bottom:.5rem"><span class="muted" id="cnt"></span></div>
@@ -53,7 +54,7 @@ export async function render(el, ctx) {
       (!f.dept || (c.job_title_id && String(ref.title[c.job_title_id]?.department_id) === f.dept)) &&
       (!f.stage || c.stage === f.stage) && (!f.lab || c.specialization === f.lab) && (!f.nat || c.nationality === f.nat) && (!f.src || c.cv_source === f.src) &&
       (!f.year || String(c.year_id) === f.year) && (!f.rating || ratingFor(c.last_score) === f.rating) &&
-      (!f.inside || String(c.inside_qatar) === f.inside));
+      (!f.inside || String(c.inside_qatar) === f.inside) && (!f.qgrad || String(c.qatar_graduate) === f.qgrad));
     el.querySelector('#cnt').textContent = `${num(filtered.length)} ${t('count_records')}`;
     el.querySelector('#list').innerHTML = filtered.length ? `<div class="table-wrap"><table><thead><tr>
       <th>${esc(t('ref_no'))}</th><th>${esc(t('full_name'))}</th><th>${esc(t('job_title'))}</th><th>${esc(t('school'))}</th>

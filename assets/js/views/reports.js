@@ -1,7 +1,7 @@
 // Reports: flexible cross-tabs of candidates and interviews, and the full vacancies workbook
 import { db } from '../api.js';
 import { state, t, en, esc, num, pct, nm, options, titleOptions, enumOptions, lockedSchool, visibleSchools, schoolName, titleName,
-  deptName, yearLabel, exportXlsx, candidateRow, chart, SERIES, bar, specLabel } from '../core.js';
+  deptName, yearLabel, exportXlsx, candidateRow, chart, SERIES, bar, specLabel, ageOf, uniLabel } from '../core.js';
 import { ratingFor } from '../i18n.js';
 import { labRows } from './labs.js';
 
@@ -31,6 +31,14 @@ export async function render(el, ctx) {
     visa_status: [t('visa_status'), c => c.visa_status, v => en('visa_status', v)],
     gender: [t('gender'), c => c.gender, v => en('gender', v)],
     marital_status: [t('marital_status'), c => c.marital_status, v => en('marital_status', v)],
+    ...(ref.candQ ? {
+      age_band: [t('age'), c => { const a = ageOf(c.birth_date); return a === null ? null : a < 30 ? '1' : a < 40 ? '2' : a < 50 ? '3' : '4'; },
+        v => ({ 1: '< 30', 2: '30–39', 3: '40–49', 4: '50+' }[v])],
+      born_in_qatar: [t('born_in_qatar'), c => c.born_in_qatar, v => en('yes_no', v)],
+      qatari_mother: [t('qatari_mother'), c => c.qatari_mother, v => en('yes_no', v)],
+      qatar_graduate: [t('qatar_graduate'), c => c.qatar_graduate, v => en('yes_no', v)],
+      qatar_university: [t('qatar_university'), c => c.qatar_university, v => uniLabel(v)],
+    } : {}),
   };
   const month = (d) => (d || '').slice(0, 7);
   const IDIMS = {

@@ -1,7 +1,7 @@
 // Candidate profile: data, vacancy, full employment journey, interviews, history
 import { db } from '../api.js';
 import { state, t, en, esc, num, fmtDate, today, can, schoolName, titleName, deptName, yearLabel, stageBadge, resultBadge,
-  ratingBadge, vacancyBadge, modal, toast, fail, readForm, role, specLabel, isLabTitle, panelHtml } from '../core.js';
+  ratingBadge, vacancyBadge, modal, toast, fail, readForm, role, specLabel, isLabTitle, panelHtml, ageOf, uniLabel } from '../core.js';
 import { openCandidateForm } from './candidate_form.js';
 
 const STEPS = [
@@ -58,6 +58,10 @@ export async function render(el, ctx) {
             ${fact(isLabTitle(c.job_title_id) ? t('lab') : t('specialization'), specLabel(c.specialization))}${fact(t('school'), schoolName(c.school_id))}${fact(t('year'), yearLabel(c.year_id))}
             ${fact(t('cv_source'), [en('cv_source', c.cv_source), c.cv_source_detail].filter(Boolean).join(' – '))}
             ${fact(t('gender'), en('gender', c.gender))}${fact(t('nationality'), c.nationality)}
+            ${state.ref.candQ ? `${fact(t('birth_date'), c.birth_date ? `${fmtDate(c.birth_date)} · ${ageOf(c.birth_date)} ${t('years_old')}` : '')}
+              ${fact(t('born_in_qatar'), c.born_in_qatar === null || c.born_in_qatar === undefined ? '' : en('yes_no', c.born_in_qatar))}
+              ${fact(t('qatari_mother'), c.qatari_mother === null || c.qatari_mother === undefined ? '' : en('yes_no', c.qatari_mother))}
+              ${fact(t('qatar_graduate'), c.qatar_graduate === null || c.qatar_graduate === undefined ? '' : en('yes_no', c.qatar_graduate) + (c.qatar_graduate && c.qatar_university ? ` – ${uniLabel(c.qatar_university)}` : ''))}` : ''}
             ${fact(t('email_addr'), c.email ? `<a href="mailto:${esc(c.email)}">${esc(c.email)}</a>` : '', true)}
             ${fact(t('phone'), c.phone ? `<span dir="ltr">${esc(c.phone)}</span>` : '', true)}
             ${fact(t('inside_qatar'), c.inside_qatar === null ? '' : en('inside_qatar', c.inside_qatar))}${fact(t('residence_country'), c.residence_country)}

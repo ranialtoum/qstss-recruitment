@@ -1,7 +1,8 @@
 // Candidate create / edit form (used from the list, the detail page and the interview page)
 import { db } from '../api.js';
 import { state, t, esc, enumOptions, titleOptions, options, modal, readForm, validate, toast, lockedSchool, visibleSchools,
-  vacancyBadge, num, labOptions, isLabTitle } from '../core.js';
+  vacancyBadge, num, labOptions, isLabTitle, ageOf } from '../core.js';
+import { UNIVERSITIES } from '../i18n.js';
 
 export const NATIONALITIES = ['Qatari', 'Jordanian', 'Palestinian', 'Egyptian', 'Syrian', 'Lebanese', 'Tunisian', 'Moroccan', 'Algerian',
   'Sudanese', 'Iraqi', 'Yemeni', 'Omani', 'Saudi', 'Emirati', 'Bahraini', 'Kuwaiti', 'Indian', 'Pakistani', 'Filipino', 'Sri Lankan',
@@ -25,6 +26,7 @@ export function candidateFields(c = {}, { compact = false } = {}) {
     <label>${esc(t('daughters'))}<input name="daughters" type="number" min="0" data-type="int" value="${c.daughters ?? 0}"></label>
     <label>${esc(t('total_children'))}<input id="kids" disabled value="${(c.sons || 0) + (c.daughters || 0)}"></label>`}
   </div></fieldset>
+  ${qatarFields(c)}
   <fieldset><legend>${esc(t('sec_location'))}</legend><div class="grid3">
     <label>${esc(t('inside_qatar'))}<select name="inside_qatar" data-type="bool">
       <option value=""></option><option value="true" ${c.inside_qatar === true ? 'selected' : ''}>${esc(t('yes'))}</option>
@@ -53,8 +55,38 @@ export function candidateFields(c = {}, { compact = false } = {}) {
   <label>${esc(t('notes'))}<textarea name="notes">${esc(c.notes || '')}</textarea></label>`}`;
 }
 
+const ynSelect = (name, v) => `<select name="${name}" data-type="bool"><option value=""></option>
+  <option value="true" ${v === true ? 'selected' : ''}>${esc(t('yes'))}</option><option value="false" ${v === false ? 'selected' : ''}>${esc(t('no'))}</option></select>`;
+
+// date of birth, born in Qatar, Qatari mother, Qatar graduate + university (needs database update 08)
+function qatarFields(c) {
+  if (!state.ref.candQ) return '';
+  const known = UNIVERSITIES.some(u => u[0] === c.qatar_university);
+  const other = c.qatar_university && !known;
+  return `<fieldset><legend>${esc(t('sec_qatar'))}</legend><div class="grid3">
+    <label>${esc(t('birth_date'))}<input type="date" name="birth_date" value="${esc(String(c.birth_date || '').slice(0, 10))}" max="${new Date().toISOString().slice(0, 10)}"></label>
+    <label>${esc(t('age'))}<input id="ageOut" disabled value="${ageOf(c.birth_date) ?? ''}"></label>
+    <label>${esc(t('born_in_qatar'))}${ynSelect('born_in_qatar', c.born_in_qatar)}</label>
+    <label>${esc(t('qatari_mother'))}${ynSelect('qatari_mother', c.qatari_mother)}</label>
+    <label>${esc(t('qatar_graduate'))}${ynSelect('qatar_graduate', c.qatar_graduate)}</label>
+    <label id="uniBox" class="${c.qatar_graduate === true ? '' : 'hidden'}">${esc(t('qatar_university'))}
+      <select name="qatar_university"><option value="">${esc(t('choose_university'))}</option>
+        ${UNIVERSITIES.map(u => `<option value="${esc(u[0])}" ${u[0] === c.qatar_university ? 'selected' : ''}>${esc(u[state.lang === 'ar' ? 1 : 0])}</option>`).join('')}
+        <option value="__other" ${other ? 'selected' : ''}>${esc(t('other_university'))}</option></select></label>
+    <label id="uniOtherBox" class="${other && c.qatar_graduate === true ? '' : 'hidden'}">${esc(t('university_name'))}<input id="uniOther" value="${esc(other ? c.qatar_university : '')}"></label>
+  </div></fieldset>`;
+}
+
 // live behaviour: children total, specialisation suggestions, vacancy info
 export function wireCandidateFields(root) {
+  const bd = root.querySelector('[name=birth_date]'), ageOut = root.querySelector('#ageOut');
+  if (bd) bd.oninput = () => { ageOut.value = ageOf(bd.value) ?? ''; };
+  const grad = root.querySelector('[name=qatar_graduate]'), uni = root.querySelector('[name=qatar_university]');
+  const showUni = () => {
+    root.querySelector('#uniBox').classList.toggle('hidden', grad.value !== 'true');
+    root.querySelector('#uniOtherBox').classList.toggle('hidden', !(grad.value === 'true' && uni.value === '__other'));
+  };
+  if (grad) { grad.onchange = showUni; uni.onchange = showUni; }
   const ref = state.ref;
   const sons = root.querySelector('[name=sons]'), daughters = root.querySelector('[name=daughters]'), kids = root.querySelector('#kids');
   const upd = () => { if (kids) kids.value = (parseInt(sons.value || 0, 10) || 0) + (parseInt(daughters.value || 0, 10) || 0); };
@@ -90,6 +122,10 @@ export function wireCandidateFields(root) {
 
 export function candidateValues(root) {
   const v = readForm(root);
+  if ('qatar_university' in v) {
+    if (v.qatar_graduate !== true) v.qatar_university = null;
+    else if (v.qatar_university === '__other') v.qatar_university = (root.querySelector('#uniOther')?.value || '').trim() || null;
+  }
   if (lockedSchool() && 'school_id' in v === false && root.querySelector('[name=school_id]')) v.school_id = lockedSchool();
   return v;
 }

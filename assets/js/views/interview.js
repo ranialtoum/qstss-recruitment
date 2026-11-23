@@ -3,7 +3,7 @@ import { db } from '../api.js';
 import { state, t, en, esc, today, options, enumOptions, titleOptions, can, role, nm, titleName, visibleSchools,
   toast, fail, readForm, validate, ratingBadge, labOptions, isLabTitle, specLabel, panelOf, panelText } from '../core.js';
 import { ratingFor, RATING_BANDS } from '../i18n.js';
-import { candidateFields, wireCandidateFields } from './candidate_form.js';
+import { candidateFields, wireCandidateFields, candidateValues, openCandidateForm } from './candidate_form.js';
 
 export async function render(el, ctx) {
   const ref = state.ref;
@@ -18,7 +18,7 @@ export async function render(el, ctx) {
   } else if (ctx.params.candidate) {
     cand = await db.get('candidates', ctx.params.candidate);
   }
-  const candidates = isNew && !cand ? await db.list('candidates', { select: 'id,ref_no,full_name,email,phone,nationality,job_title_id,specialization,cv_source,cv_source_detail,school_id' }) : [];
+  const candidates = isNew && !cand ? await db.list('candidates', { select: 'id,ref_no,full_name,email,phone,nationality,job_title_id,specialization,cv_source,cv_source_detail,school_id,created_by' }) : [];
   if (!ctx.seq()) return;
 
   const editable = isNew || can('manage') || (role() === 'interviewer' && iv.created_by === state.profile.id);
@@ -93,13 +93,17 @@ export async function render(el, ctx) {
   const $ = (s) => form.querySelector(s);
 
   // ---- candidate block ----
+  const canEditCand = (c) => !!c && (can('manage') || (role() === 'interviewer' && c.created_by === state.profile.id));
   function drawCand() {
     const box = $('#cand');
     if (candMode === 'fixed' && picked) {
       box.innerHTML = `<div class="row-between"><div><b>${esc(picked.full_name)}</b> <small class="muted">#${picked.ref_no}</small>
         <div class="muted">${esc([titleName(picked.job_title_id), specLabel(picked.specialization), picked.nationality, picked.email, picked.phone].filter(Boolean).join(' · '))}</div></div>
-        ${isNew && !ctx.params.candidate ? `<button type="button" class="btn small" id="chg">${esc(t('edit'))}</button>` : ''}</div>`;
+        <span class="row no-print">${canEditCand(picked) ? `<button type="button" class="btn small" id="edc">${esc(t('edit_candidate'))}</button>` : ''}
+        ${isNew && !ctx.params.candidate ? `<button type="button" class="btn small" id="chg">${esc(t('choose_candidate'))} ↺</button>` : ''}</span></div>`;
       const chg = box.querySelector('#chg'); if (chg) chg.onclick = () => { candMode = 'existing'; picked = null; drawCand(); };
+      const edc = box.querySelector('#edc');
+      if (edc) edc.onclick = async () => { const full = await db.get('candidates', picked.id); openCandidateForm(full, (saved) => { picked = saved; drawCand(); }); };
       return;
     }
     box.innerHTML = `<div class="seg" style="margin-bottom:.75rem">
@@ -233,7 +237,7 @@ export async function render(el, ctx) {
       const lab = isLabTitle(tid) ? $('#lab').value : '';
       let candidate = picked;
       if (candMode === 'new') {
-        const cv = readForm($('#newc'));
+        const cv = candidateValues($('#newc'));
         candidate = await db.insert('candidates', { ...cv, job_title_id: tid, ...(lab ? { specialization: lab } : {}) });
       }
       const c = computed();
