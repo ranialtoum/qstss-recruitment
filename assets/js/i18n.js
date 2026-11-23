@@ -28,7 +28,8 @@ export const DICT = {
     // generic fields
     school: 'School', schools: 'Schools', department: 'Department', job_title: 'Job title', specialization: 'Specialisation',
     year: 'Academic year', nationality: 'Nationality', notes: 'Notes', status: 'Status', date: 'Date', role: 'Role',
-    all_schools: 'All schools', all_years: 'All years', reports_to: 'Reports to', category: 'Category',
+    all_schools: 'All schools', all_years: 'All years', overall_structure: 'Overall (approved structure)', required_hires: 'Required hires',
+    year_need_hint: 'Required hires = the hiring plan for the selected year, added up across all schools. Remaining = Required hires − Selected candidates for that year.', reports_to: 'Reports to', category: 'Category',
 
     // structure / vacancies
     approved: 'Approved', current_staff: 'Staff 2026/27', selected: 'Selected', hired: 'Hired', joined: 'Joined',
@@ -132,7 +133,8 @@ export const DICT = {
 
     school: 'المدرسة', schools: 'المدارس', department: 'القسم / الإدارة', job_title: 'المسمى الوظيفي', specialization: 'التخصص',
     year: 'العام الدراسي', nationality: 'الجنسية', notes: 'ملاحظات', status: 'الحالة', date: 'التاريخ', role: 'الصلاحية',
-    all_schools: 'كل المدارس', all_years: 'كل السنوات', reports_to: 'يتبع لـ', category: 'الفئة',
+    all_schools: 'كل المدارس', all_years: 'كل السنوات', overall_structure: 'الإجمالي (الهيكل المعتمد)', required_hires: 'المطلوب تعيينه',
+    year_need_hint: 'المطلوب تعيينه = خطة التعيين للسنة المختارة مجموعةً لكل المدارس. المتبقي = المطلوب تعيينه − المرشحون المختارون لتلك السنة.', reports_to: 'يتبع لـ', category: 'الفئة',
 
     approved: 'المعتمد', current_staff: 'موظفو 2026/27', selected: 'تم اختيارهم', hired: 'تم تعيينهم', joined: 'باشروا',
     remaining: 'المتبقي', planned: 'المخطط', occupancy: 'نسبة الإشغال', fill_progress: 'نسبة إنجاز الخطة',

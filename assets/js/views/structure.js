@@ -31,16 +31,26 @@ export async function render(el, ctx) {
       ${locked ? '' : `<button data-s="all">${esc(t('all_schools'))}</button>`}
       ${visibleSchools().map(s => `<button data-s="${s.id}">${esc(nm(s))}</button>`).join('')}
     </div>
+    <div class="toolbar" id="ybar" hidden>
+      <label>${esc(t('year'))}<select id="fy"><option value="">${esc(t('overall_structure'))}</option>
+        ${years.map(y => `<option value="${y.id}">${esc(y.label)}</option>`).join('')}</select></label>
+    </div>
     <div id="body"></div>`;
   const tabs = el.querySelectorAll('#tabs button');
   tabs.forEach(b => b.onclick = () => { school = b.dataset.s; draw(); });
+  let yearId = ctx.params.year && years.some(y => String(y.id) === ctx.params.year) ? Number(ctx.params.year) : null;
+  const fy = el.querySelector('#fy');
+  fy.value = yearId ? String(yearId) : '';
+  fy.onchange = () => { yearId = fy.value ? Number(fy.value) : null; draw(); };
   let exportRows = [];
-  el.querySelector('#xl').onclick = () => exportXlsx([{ name: school === 'all' ? t('all_schools') : schoolName(Number(school)), rows: exportRows }], 'vacancies');
+  el.querySelector('#xl').onclick = () => exportXlsx([{ name: school === 'all' ? (yearId ? `${t('all_schools')} ${ref.yearById[yearId].label}`.replace(/[\\/?*[\]:]/g, '-') : t('all_schools')) : schoolName(Number(school)), rows: exportRows }], 'vacancies');
 
   function draw() {
     tabs.forEach(b => b.classList.toggle('active', b.dataset.s === String(school)));
+    el.querySelector('#ybar').hidden = school !== 'all';
     const body = el.querySelector('#body');
     exportRows = [];
+    if (school === 'all' && yearId) return drawYear(body);
     if (school === 'all') {
       // matrix: title × school (remaining), plus totals
       const schools = ref.schools;
@@ -148,6 +158,57 @@ export async function render(el, ctx) {
       showCandidates(sid, Number(tr.dataset.t));
     });
     body.querySelectorAll('[data-edit]').forEach(b => b.onclick = () => editCounts(sid, Number(b.dataset.edit)));
+  }
+
+  // All schools × one academic year: required hires (hiring plan) per job title, summed across schools
+  function drawYear(body) {
+    const schools = ref.schools;
+    const yLabel = ref.yearById[yearId].label;
+    const yrows = plan.filter(p => p.year_id === yearId);
+    const sum = (list, f) => list.reduce((a, r) => a + (r[f] || 0), 0);
+    let html = `<p class="muted" style="margin-top:0">${esc(t('year_need_hint'))}</p>
+      <div class="table-wrap"><table class="plan"><thead><tr><th>${esc(t('job_title'))}</th>
+      <th class="n">${esc(t('required_hires'))}<span class="cell-sub">${esc(yLabel)}</span></th><th class="n">${esc(t('selected'))}</th><th class="n">${esc(t('remaining'))}</th>
+      ${schools.map(s => `<th class="n" title="${esc(nm(s))}">${esc(nm(s))}<span class="cell-sub">${esc(t('required_hires'))}</span></th>`).join('')}</tr></thead><tbody>`;
+    const tot = { pl: 0, se: 0, r: 0, per: {} };
+    const cell = (v) => `<td class="n">${v ? num(v) : '<span class="muted">–</span>'}</td>`;
+    for (const d of ref.departments) {
+      const titles = ref.titles.filter(x => x.department_id === d.id)
+        .filter(ti => pos.some(r => r.job_title_id === ti.id) || yrows.some(p => p.job_title_id === ti.id));
+      if (!titles.length) continue;
+      html += `<tr class="group"><td colspan="${4 + schools.length}"><span class="stick">${esc(nm(d))}</span></td></tr>`;
+      for (const ti of titles) {
+        const rows = yrows.filter(p => p.job_title_id === ti.id);
+        const pl = sum(rows, 'planned'), se = sum(rows, 'selected'), rem = pl - se;
+        const per = schools.map(sc => sum(rows.filter(p => p.school_id === sc.id), 'planned'));
+        tot.pl += pl; tot.se += se; tot.r += Math.max(0, rem);
+        per.forEach((v, i) => { tot.per[i] = (tot.per[i] || 0) + v; });
+        html += `<tr><td>${esc(nm(ti))}</td><td class="n"><b>${num(pl)}</b></td><td class="n">${num(se)}</td><td class="n ${cls(rem)}">${num(rem)}</td>${per.map(cell).join('')}</tr>`;
+        const row = { [t('department')]: nm(d), [t('job_title')]: nm(ti), [`${t('required_hires')} ${yLabel}`]: pl, [t('selected')]: se, [t('remaining')]: rem };
+        schools.forEach((sc, i) => { row[nm(sc)] = per[i]; });
+        exportRows.push(row);
+        if (ti.per_lab) {
+          const bySchool = schools.map(sc => breakdown(sc.id, ti.id));
+          const names = [];
+          bySchool.flat().forEach(r => { const k = r.unassigned ? '__u' : r.name; if (!names.includes(k)) names.push(k); });
+          names.sort((x, y) => (x === '__u') - (y === '__u'));
+          for (const k of names) {
+            const cells = bySchool.map(list => list.find(r => (r.unassigned ? '__u' : r.name) === k)?.years[yearId] || { pl: 0, se: 0 });
+            const lpl = sum(cells, 'pl'), lse = sum(cells, 'se');
+            if (!lpl && !lse) continue;
+            const label = k === '__u' ? t('lab_unassigned') : specLabel(k);
+            html += `<tr class="sub ${k === '__u' ? 'unassigned' : ''}"><td>${esc(label)}</td><td class="n">${num(lpl)}</td><td class="n">${num(lse)}</td>
+              <td class="n ${cls(lpl - lse)}">${num(lpl - lse)}</td>${cells.map(c => cell(c.pl)).join('')}</tr>`;
+            const er = { [t('department')]: nm(d), [t('job_title')]: `   ↳ ${label}`, [`${t('required_hires')} ${yLabel}`]: lpl, [t('selected')]: lse, [t('remaining')]: lpl - lse };
+            schools.forEach((sc, i) => { er[nm(sc)] = cells[i].pl; });
+            exportRows.push(er);
+          }
+        }
+      }
+    }
+    html += `</tbody><tfoot><tr><td>${esc(t('total'))}</td><td class="n">${num(tot.pl)}</td><td class="n">${num(tot.se)}</td><td class="n">${num(tot.r)}</td>
+      ${schools.map((s, i) => `<td class="n">${num(tot.per[i] || 0)}</td>`).join('')}</tr></tfoot></table></div>`;
+    body.innerHTML = html;
   }
 
   async function showCandidates(sid, tid) {
