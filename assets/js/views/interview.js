@@ -144,7 +144,9 @@ export async function render(el, ctx) {
   function criteriaFor(tid) {
     const ti = ref.title[tid];
     if (!ti) return [];
-    return ref.criteria.filter(c => c.active !== false && ((ti.rubric_key && c.rubric_key === ti.rubric_key) || c.job_title_id === ti.id));
+    // an existing interview keeps the rubric it was scored with, even if the title's rubric changed later
+    const rk = (!isNew && iv.rubric_key && tid === iv.job_title_id && Object.keys(iv.scores || {}).length) ? iv.rubric_key : ti.rubric_key;
+    return ref.criteria.filter(c => c.active !== false && ((rk && c.rubric_key === rk) || c.job_title_id === ti.id));
   }
   function toggleLab() {
     const lab = isLabTitle(Number($('[name=job_title_id]').value));
@@ -158,10 +160,11 @@ export async function render(el, ctx) {
     const tid = Number($('[name=job_title_id]').value);
     const crit = criteriaFor(tid);
     const ti = ref.title[tid];
-    $('#rubName').textContent = ti?.rubric_key ? `${t('rubric')}: ${nm(ref.rubric[ti.rubric_key])} · ${en('category', ti.category)}` : '';
+    const rk = (!isNew && iv.rubric_key && tid === iv.job_title_id && Object.keys(iv.scores || {}).length) ? iv.rubric_key : ti?.rubric_key;
+    $('#rubName').textContent = rk ? `${t('rubric')}: ${nm(ref.rubric[rk])} · ${en('category', ti.category)}` : '';
     $('#crit').innerHTML = crit.length ? crit.map(c => `<div class="crit" data-k="${esc(c.key)}">
         <div class="crit-head"><div><b>${esc(nm(c))}</b> <span class="w">${esc(t('weight'))} ${c.weight}%</span>
-          ${(state.lang === 'ar' ? c.hint_ar : c.hint_en) ? `<div class="muted" style="font-size:.82rem">${esc(state.lang === 'ar' ? c.hint_ar : c.hint_en)}</div>` : ''}</div>
+          ${(state.lang === 'ar' ? c.hint_ar : c.hint_en) ? `<div class="crit-hint">${esc(state.lang === 'ar' ? c.hint_ar : c.hint_en)}</div>` : ''}</div>
           <div class="scale">${[1, 2, 3, 4, 5].map(n => `<button type="button" data-n="${n}" class="${Number(scores[c.key]) === n ? 'on' : ''}" ${editable ? '' : 'disabled'}>${n}</button>`).join('')}</div></div>
         <input class="crit-note" placeholder="${esc(t('note'))}" value="${esc(notesBy[c.key] || '')}" ${editable ? '' : 'disabled'}></div>`).join('')
       : `<div class="empty">${esc(t('pick_title_first'))}</div>`;

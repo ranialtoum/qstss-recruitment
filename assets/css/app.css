@@ -319,3 +319,6 @@ input.num.dirty { background: #fff6dc; border-color: #e0a526; font-weight: 700; 
 .savebar .btn.primary { background: #fff; color: var(--brand-2); border-color: #fff; }
 @media print { .savebar { display: none !important; } }
 .view:has(.savebar:not(.hidden)) .table-wrap:has(> table.plan) { max-height: max(300px, calc(100vh - 370px)); }
+
+.crit-hint { color: var(--ink-2); font-size: .82rem; white-space: pre-line; unicode-bidi: plaintext; margin-top: .25rem; line-height: 1.55; }
+.crit-head > div:first-child { flex: 1 1 320px; }
