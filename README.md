@@ -72,7 +72,7 @@ update public.profiles set role = 'admin', status = 'approved' where email = 'yo
 
 ## English – setup
 
-1. **Supabase**: create a project → SQL Editor → run `supabase/01_schema.sql`, then `supabase/02_seed.sql`, then `supabase/03_interview_lab.sql` `supabase/04_lab_breakdown.sql`, `supabase/05_interview_panel.sql`, `supabase/06_lab_plan_details_only.sql`, `supabase/07_admin_only_plan.sql`, `supabase/08_candidate_qatar_ties.sql` and `supabase/09_eprojects_coordinator_rubric.sql`. In *Authentication → Providers → Email* consider turning **Confirm email** off (admin approval already gates access, and Supabase's built-in mailer is heavily rate-limited) or configure your own SMTP.
+1. **Supabase**: create a project → SQL Editor → run `supabase/01_schema.sql`, then `supabase/02_seed.sql`, then `supabase/03_interview_lab.sql` `supabase/04_lab_breakdown.sql`, `supabase/05_interview_panel.sql`, `supabase/06_lab_plan_details_only.sql`, `supabase/07_admin_only_plan.sql`, `supabase/08_candidate_qatar_ties.sql`, `supabase/09_eprojects_coordinator_rubric.sql` and `supabase/10_interview_questions.sql`. In *Authentication → Providers → Email* consider turning **Confirm email** off (admin approval already gates access, and Supabase's built-in mailer is heavily rate-limited) or configure your own SMTP.
 2. **Connect**: put the *Project URL* and the *publishable key* (`sb_publishable_…`, from the project's **Connect** dialog or Settings → API Keys) in `assets/js/config.js`.
 3. **GitHub Pages**: push the repo, *Settings → Pages → Deploy from a branch → main / root*. Add the site URL to Supabase *Authentication → URL Configuration* (Site URL + Redirect URLs).
 4. **First admin**: register in the app, then run in the SQL editor
@@ -108,6 +108,8 @@ supabase/06_lab_plan_details_only.sql update: lab roles planned per lab only (ol
 supabase/07_admin_only_plan.sql update: only administrators change the hiring plan
 supabase/08_candidate_qatar_ties.sql update: date of birth, born in Qatar, Qatari mother, Qatar university graduate
 supabase/09_eprojects_coordinator_rubric.sql update: dedicated interview rubric for the E-Projects Coordinator
+supabase/10_interview_questions.sql update: marks for each subject-mastery question (teacher interviews)
+assets/js/questions.js     teacher interview questions, scenarios and model answers (edit here)
 tools/build_seed.py        regenerates 02_seed.sql from an updated workbook
 tests/                     local PostgreSQL permission tests + browser end-to-end test
 ```

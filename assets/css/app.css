@@ -210,6 +210,24 @@ td.pos { color: var(--amber); font-weight: 600; } td.neg { color: var(--red); fo
 .scale button:last-child { border-inline-end: 0; }
 .scale button.on { background: var(--brand); color: #fff; }
 .crit input.crit-note { margin-top: .45rem; }
+/* interview questions */
+.crit details { margin-top: .45rem; font-size: .88rem; }
+.crit details summary { cursor: pointer; color: var(--brand); font-weight: 500; }
+.crit details ol { margin: .4rem 0 .2rem; padding-inline-start: 1.3rem; }
+.crit details li { margin-bottom: .3rem; }
+.qtag { display: inline-block; font-size: .7rem; font-weight: 600; padding: .05rem .45rem; border-radius: 999px; background: var(--blue-bg); color: var(--blue); vertical-align: middle; }
+.qtag-scenario, .qtag-hot { background: var(--amber-bg); color: var(--amber); }
+.qtag-stem { background: var(--green-bg, var(--blue-bg)); color: var(--green, var(--blue)); }
+.sq { border-top: 1px dashed var(--line); padding: .6rem 0 .3rem; }
+.sq-head { display: flex; justify-content: space-between; gap: .75rem; align-items: flex-start; }
+.sq-text { flex: 1; min-width: 0; }
+.sq-text > div + div { margin-top: .25rem; }
+.crit details.model { margin: .3rem 0 0; }
+.crit details.model ol { background: var(--surface-2, var(--bg)); border-radius: 8px; padding-block: .5rem; }
+.subj-total { display: flex; flex-wrap: wrap; gap: .5rem 1.25rem; align-items: flex-end; border-top: 1px solid var(--line); padding-top: .6rem; margin-top: .3rem; }
+.subj-total input { width: 90px; font-size: 1.15rem; font-weight: 700; }
+.subj-badge { font-size: 1.05rem; white-space: nowrap; }
+@media (max-width: 640px) { .sq-head { flex-direction: column; } }
 .score-panel { position: sticky; top: 70px; }
 .score-big { font-size: 2.6rem; font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums; }
 input[type=range] { padding: 0; accent-color: var(--brand); }

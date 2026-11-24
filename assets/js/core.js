@@ -66,6 +66,8 @@ export async function loadRef() {
   // does the database have update 03 (lab on each interview) and update 05 (panel with job titles)?
   try { await db.list('interviews', { select: 'specialization', limit: 1 }); state.ref.ivLab = true; } catch (e) { state.ref.ivLab = false; }
   try { await db.list('interviews', { select: 'panel', limit: 1 }); state.ref.ivPanel = true; } catch (e) { state.ref.ivPanel = false; }
+  // update 10: marks for each subject-mastery question
+  try { await db.list('interviews', { select: 'question_marks', limit: 1 }); state.ref.ivQ = true; } catch (e) { state.ref.ivQ = false; }
   // update 08: date of birth / born in Qatar / Qatari mother / Qatar graduate
   try { await db.list('candidates', { select: 'qatar_university', limit: 1 }); state.ref.candQ = true; } catch (e) { state.ref.candQ = false; }
 }

@@ -1,9 +1,10 @@
 // Interview record: candidate + role-specific rubric + holistic score /100 with colour-coded rating
 import { db } from '../api.js';
 import { state, t, en, esc, today, options, enumOptions, titleOptions, can, role, nm, titleName, visibleSchools,
-  toast, fail, readForm, validate, ratingBadge, labOptions, isLabTitle, specLabel, panelOf, panelText } from '../core.js';
+  toast, fail, readForm, validate, ratingBadge, labOptions, isLabTitle, specLabel, panelOf, panelText, num } from '../core.js';
 import { ratingFor, RATING_BANDS } from '../i18n.js';
 import { candidateFields, wireCandidateFields, candidateValues, openCandidateForm } from './candidate_form.js';
+import { GENERAL, Q_TYPES, subjectSetFor, setMax } from '../questions.js';
 
 export async function render(el, ctx) {
   const ref = state.ref;
@@ -29,6 +30,9 @@ export async function render(el, ctx) {
   };
   let scores = { ...(v.scores || {}) };
   let notesBy = { ...(v.criteria_notes || {}) };
+  // subject-mastery questions: { set: job title name, marks: {qid: n}, manual: number|null }
+  let subj = { marks: {}, manual: null, ...((v.question_marks || {}).subject || {}) };
+  let firstDraw = true;
   let overallTouched = v.overall_score !== null && v.overall_score !== undefined;
   let candMode = cand ? 'fixed' : 'existing';
   let picked = cand;
@@ -162,15 +166,21 @@ export async function render(el, ctx) {
     const ti = ref.title[tid];
     const rk = (!isNew && iv.rubric_key && tid === iv.job_title_id && Object.keys(iv.scores || {}).length) ? iv.rubric_key : ti?.rubric_key;
     $('#rubName').textContent = rk ? `${t('rubric')}: ${nm(ref.rubric[rk])} · ${en('category', ti.category)}` : '';
+    const set = rk === 'teacher' && crit.some(c => c.key === 'subject') ? subjectSetFor(ti) : null;
+    syncSubjectSet(set, ti);
+    const general = GENERAL[rk] || {};
     $('#crit').innerHTML = crit.length ? crit.map(c => `<div class="crit" data-k="${esc(c.key)}">
         <div class="crit-head"><div><b>${esc(nm(c))}</b> <span class="w">${esc(t('weight'))} ${c.weight}%</span>
           ${(state.lang === 'ar' ? c.hint_ar : c.hint_en) ? `<div class="crit-hint">${esc(state.lang === 'ar' ? c.hint_ar : c.hint_en)}</div>` : ''}</div>
-          <div class="scale">${[1, 2, 3, 4, 5].map(n => `<button type="button" data-n="${n}" class="${Number(scores[c.key]) === n ? 'on' : ''}" ${editable ? '' : 'disabled'}>${n}</button>`).join('')}</div></div>
+          ${c.key === 'subject' && set ? `<div class="subj-badge" id="subjBadge"></div>`
+            : `<div class="scale">${[1, 2, 3, 4, 5].map(n => `<button type="button" data-n="${n}" class="${Number(scores[c.key]) === n ? 'on' : ''}" ${editable ? '' : 'disabled'}>${n}</button>`).join('')}</div>`}</div>
+        ${c.key === 'subject' && set ? subjectHtml(set) : generalHtml(general[c.key])}
         <input class="crit-note" placeholder="${esc(t('note'))}" value="${esc(notesBy[c.key] || '')}" ${editable ? '' : 'disabled'}></div>`).join('')
       : `<div class="empty">${esc(t('pick_title_first'))}</div>`;
+    if (set) wireSubject(set);
     $('#crit').querySelectorAll('.crit').forEach(box => {
       const k = box.dataset.k;
-      box.querySelectorAll('[data-n]').forEach(b => b.onclick = () => {
+      box.querySelectorAll('.scale:not(.qscale) [data-n]').forEach(b => b.onclick = () => {
         scores[k] = Number(scores[k]) === Number(b.dataset.n) ? undefined : Number(b.dataset.n);
         if (scores[k] === undefined) delete scores[k];
         box.querySelectorAll('[data-n]').forEach(x => x.classList.toggle('on', Number(x.dataset.n) === scores[k]));
@@ -180,10 +190,86 @@ export async function render(el, ctx) {
     });
     calc();
   }
+
+  // ---- interview questions ----
+  const L = (pair) => (state.lang === 'ar' ? pair[1] : pair[0]);
+  const qtag = (type) => `<span class="qtag qtag-${type}">${esc(L(Q_TYPES[type]))}</span>`;
+  function generalHtml(list) {
+    if (!list || !list.length) return '';
+    return `<details class="qs"><summary>${esc(t('suggested_questions'))} (${list.length})</summary><ol>
+      ${list.map(q => `<li>${q.scenario ? qtag('scenario') : ''} ${esc(state.lang === 'ar' ? q.ar : q.en)}</li>`).join('')}</ol></details>`;
+  }
+  const round2 = (x) => Math.round(x * 100) / 100;
+  const marksSum = (set) => set.questions.reduce((a, q) => a + (Number(subj.marks[q.id]) || 0), 0);
+  const anyMarks = (set) => set.questions.some(q => subj.marks[q.id] !== undefined);
+  const subjFinal = (set) => (subj.manual !== null && subj.manual !== undefined ? subj.manual : anyMarks(set) ? marksSum(set) : null);
+  // keep the stored question set in line with the chosen job title
+  function syncSubjectSet(set, ti) {
+    const name = set ? ti.name_en : null;
+    if (firstDraw) {
+      firstDraw = false;
+      // older interview scored 1–5 without questions: show it as a manual score out of the set's maximum
+      if (set && !subj.set && !Object.keys(subj.marks).length && scores.subject !== undefined) { subj.set = name; subj.manual = round2(scores.subject / 5 * setMax(set)); }
+    }
+    if ((subj.set || null) === name) return;
+    if (subj.set) delete scores.subject;   // the title changed: the old questions no longer apply
+    subj = { set: name, marks: {}, manual: null };
+  }
+  function subjectHtml(set) {
+    const max = setMax(set), dir = set.lang === 'ar' ? 'rtl' : 'ltr';
+    return `<p class="muted" style="margin:.4rem 0 .2rem;font-size:.82rem">${esc(t('subject_q_hint'))}</p>
+      ${set.questions.map((q, i) => { const m = q.a.length; return `<div class="sq" data-q="${q.id}">
+        <div class="sq-head"><div class="sq-text"><div>${qtag(q.type)}${q.scenario ? ` ${qtag("scenario")}` : ""} <b>${esc(t("question"))} ${i + 1}</b> <span class="muted">· ${m} ${esc(t('marks'))}</span></div>
+          <div lang="${set.lang}" dir="${dir}">${esc(q.q)}</div></div>
+          <div class="scale qscale">${Array.from({ length: m + 1 }, (_, n) => `<button type="button" data-n="${n}" class="${subj.marks[q.id] === n ? 'on' : ''}" ${editable ? '' : 'disabled'}>${n}</button>`).join('')}</div></div>
+        <details class="model"><summary>${esc(t('model_answer'))} <span class="muted">(${esc(t('mark_per_point'))})</span></summary>
+          <ol lang="${set.lang}" dir="${dir}">${q.a.map(p => `<li>${esc(p)}</li>`).join('')}</ol></details></div>`; }).join('')}
+      <div class="subj-total">
+        <label>${esc(t('subject_score'))}<span class="row"><input type="number" id="subjScore" min="0" max="${max}" step="0.5" ${editable ? '' : 'disabled'}> <b>/ ${max}</b></span></label>
+        <div><div class="muted" id="subjCalc"></div><span id="subjManual"></span>
+          ${editable ? `<button type="button" class="btn small no-print" id="subjReset">${esc(t('use_questions_total'))}</button>` : ''}</div>
+      </div>
+      ${state.ref.ivQ === false && can('admin') ? `<div class="notice" style="margin-top:.5rem">${esc(t('q_db_update'))}</div>` : ''}`;
+  }
+  function wireSubject(set) {
+    const box = $('#crit').querySelector('.crit[data-k="subject"]');
+    const max = setMax(set), inp = box.querySelector('#subjScore');
+    const refresh = () => {
+      const sum = marksSum(set), fin = subjFinal(set);
+      if (fin === null) delete scores.subject; else scores.subject = round2(fin / max * 5);
+      if (document.activeElement !== inp) inp.value = fin ?? '';
+      box.querySelector('#subjCalc').textContent = `${t('from_questions')}: ${num(sum)} / ${max} (${set.questions.filter(q => subj.marks[q.id] !== undefined).length} / ${set.questions.length})`;
+      const manual = subj.manual !== null && subj.manual !== undefined;
+      box.querySelector('#subjManual').innerHTML = manual ? `<span class="badge tone-amber">${esc(t('manually_adjusted'))}</span> ` : '';
+      const rs = box.querySelector('#subjReset'); if (rs) rs.classList.toggle('hidden', !manual);
+      $('#subjBadge').innerHTML = fin === null ? '<span class="muted">–</span>' : `<b>${num(fin)}</b> / ${max}`;
+      calc();
+    };
+    box.querySelectorAll('.sq').forEach(row => {
+      const id = row.dataset.q;
+      row.querySelectorAll('[data-n]').forEach(b => b.onclick = () => {
+        const n = Number(b.dataset.n);
+        if (subj.marks[id] === n) delete subj.marks[id]; else subj.marks[id] = n;
+        row.querySelectorAll('[data-n]').forEach(x => x.classList.toggle('on', Number(x.dataset.n) === subj.marks[id]));
+        refresh();
+      });
+    });
+    inp.oninput = () => {
+      if (inp.value === '') subj.manual = null;
+      else subj.manual = Math.max(0, Math.min(max, Number(inp.value)));
+      refresh();
+    };
+    inp.onchange = () => { inp.value = subjFinal(set) ?? ''; };
+    const rs = box.querySelector('#subjReset');
+    if (rs) rs.onclick = () => { subj.manual = null; inp.value = subjFinal(set) ?? ''; refresh(); };
+    refresh();
+  }
+  window.addEventListener('beforeprint', () => el.querySelectorAll('details').forEach(d => { d.open = true; }));
+
   function computed() {
     const crit = criteriaFor(Number($('[name=job_title_id]').value));
     let w = 0, s = 0, n = 0;
-    crit.forEach(c => { if (scores[c.key]) { w += Number(c.weight); s += Number(c.weight) * scores[c.key] / 5; n++; } });
+    crit.forEach(c => { if (scores[c.key] !== undefined && scores[c.key] !== null) { w += Number(c.weight); s += Number(c.weight) * scores[c.key] / 5; n++; } });
     return { score: w ? Math.round((s / w) * 100) : null, n, total: crit.length };
   }
   function calc() {
@@ -257,6 +343,7 @@ export async function render(el, ctx) {
       const panel = readPanel();
       row.interviewers = panelText(panel) || null;
       if (ref.ivPanel) row.panel = panel;
+      if (ref.ivQ) row.question_marks = subj.set ? { subject: { set: subj.set, marks: subj.marks, manual: subj.manual ?? null } } : {};
       if (isNew) await db.insert('interviews', row); else await db.update('interviews', iv.id, row);
       const patch = {};
       if (!ref.ivLab && candMode !== 'new' && lab && lab !== candidate.specialization) patch.specialization = lab;

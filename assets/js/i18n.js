@@ -29,6 +29,10 @@ export const DICT = {
     school: 'School', schools: 'Schools', department: 'Department', job_title: 'Job title', specialization: 'Specialisation',
     year: 'Academic year', nationality: 'Nationality', notes: 'Notes', status: 'Status', date: 'Date', role: 'Role',
     all_schools: 'All schools', all_years: 'All years', overall_structure: 'Overall (approved structure)', required_hires: 'Required hires',
+    suggested_questions: 'Suggested questions', question: 'Question', marks: 'marks', model_answer: 'Model answer', mark_per_point: '1 mark for each point',
+    subject_q_hint: 'Ask the five questions below. Give one mark for each point of the model answer the candidate covers. The total is the subject mastery score — you can still type a different score.',
+    subject_score: 'Subject mastery score', from_questions: 'From the questions', use_questions_total: 'Use the questions total', manually_adjusted: 'Changed by hand',
+    q_db_update: 'Run supabase/10_interview_questions.sql in Supabase to save the mark of each question (the total score is saved already).',
     year_need_hint: 'Required hires = the hiring plan for the selected year, added up across all schools. Remaining = Required hires − Selected candidates for that year.', reports_to: 'Reports to', category: 'Category',
 
     // structure / vacancies
@@ -134,6 +138,10 @@ export const DICT = {
     school: 'المدرسة', schools: 'المدارس', department: 'القسم / الإدارة', job_title: 'المسمى الوظيفي', specialization: 'التخصص',
     year: 'العام الدراسي', nationality: 'الجنسية', notes: 'ملاحظات', status: 'الحالة', date: 'التاريخ', role: 'الصلاحية',
     all_schools: 'كل المدارس', all_years: 'كل السنوات', overall_structure: 'الإجمالي (الهيكل المعتمد)', required_hires: 'المطلوب تعيينه',
+    suggested_questions: 'أسئلة مقترحة', question: 'السؤال', marks: 'درجات', model_answer: 'الإجابة النموذجية', mark_per_point: 'درجة لكل نقطة',
+    subject_q_hint: 'اطرح الأسئلة الخمسة أدناه، وامنح درجة لكل نقطة من الإجابة النموذجية يذكرها المرشح. المجموع هو درجة التمكن من المادة، ويمكنك تعديلها يدوياً.',
+    subject_score: 'درجة التمكن من المادة', from_questions: 'من الأسئلة', use_questions_total: 'استخدام مجموع الأسئلة', manually_adjusted: 'معدّلة يدوياً',
+    q_db_update: 'نفّذ الملف supabase/10_interview_questions.sql في Supabase لحفظ درجة كل سؤال (الدرجة الإجمالية تُحفظ حالياً).',
     year_need_hint: 'المطلوب تعيينه = خطة التعيين للسنة المختارة مجموعةً لكل المدارس. المتبقي = المطلوب تعيينه − المرشحون المختارون لتلك السنة.', reports_to: 'يتبع لـ', category: 'الفئة',
 
     approved: 'المعتمد', current_staff: 'موظفو 2026/27', selected: 'تم اختيارهم', hired: 'تم تعيينهم', joined: 'باشروا',
